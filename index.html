@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>漢堡宇宙文字轉盤</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #222;
+      color: #f9f9f9;
+    }
+
+    .game-container {
+      background: #333;
+      padding: 24px 28px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      max-width: 900px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .title {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 10px;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wheel {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      border: 6px solid #f5f5f5;
+      position: relative;
+      transition: transform 3s cubic-bezier(0.22, 0.61, 0.36, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .wheel-center {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #222;
+      border: 4px solid #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      padding: 4px;
+      z-index: 2;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 22px solid #ffca28;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      z-index: 3;
+    }
+
+    .spin-button {
+      margin-top: 18px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff7043, #ffb300);
+      color: #222;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease;
+    }
+
+    .spin-button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+    }
+
+    .spin-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .info-panel {
+      border-radius: 16px;
+      background: #2a2a2a;
+      padding: 16px;
+    }
+
+    .info-panel h2 {
+      font-size: 18px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .score {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .last-result {
+      font-size: 15px;
+      margin-bottom: 12px;
+      min-height: 40px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #444;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+
+    .tag.high { background: #d32f2f; }
+    .tag.mid { background: #f57c00; }
+    .tag.low { background: #388e3c; }
+    .tag.special { background: #7b1fa2; }
+
+    .history {
+      font-size: 13px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .history-item {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 4px 0;
+    }
+
+    .history-item span.label {
+      font-weight: 600;
+    }
+
+    .tips {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #bbb;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 780px) {
+      .game-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="title">漢堡宇宙 · 文字轉盤</div>
+    <div class="subtitle">按下「開始轉！」，看看今天命中哪一個漢堡命運。</div>
+
+    <!-- 左側：轉盤區 -->
+    <div>
+      <div class="wheel-wrapper">
+        <div class="pointer"></div>
+        <div id="wheel" class="wheel">
+          <div class="wheel-center">
+            指針指向<br>就是結果
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <button id="spinButton" class="spin-button">開始轉！</button>
+      </div>
+    </div>
+
+    <!-- 右側：資訊區 -->
+    <div class="info-panel">
+      <h2>狀態</h2>
+      <div class="score">總分：<span id="score">0</span></div>
+      <div class="last-result" id="lastResult">還沒開始，先聞一下想像中的漢堡香。</div>
+
+      <div style="margin-bottom: 10px;">
+        <span class="tag high">高熱量高分</span>
+        <span class="tag mid">中熱量中分</span>
+        <span class="tag low">低熱量小安穩</span>
+        <span class="tag special">特殊事件</span>
+      </div>
+
+      <h2>歷史紀錄</h2>
+      <div id="history" class="history"></div>
+
+      <div class="tips">
+        小玩法建議：<br>
+        ‧ 每個人輪流轉 5～8 次，最後比總分。<br>
+        ‧ 抽到「再轉一次」時，可以加一個規則：要用廣告腔唸出該漢堡名稱才能生效。<br>
+        ‧ 想改題目，只要打開原始碼，修改 items 陣列的文字與分數即可。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === 遊戲資料：漢堡文字轉盤格子 ===
+    const items = [
+      { label: "起司牛肉堡", points: 300, type: "high" },
+      { label: "香脆雞腿堡", points: 260, type: "high" },
+      { label: "培根起司堡", points: 280, type: "high" },
+      { label: "生菜輕盈堡", points: 150, type: "mid" },
+      { label: "雙層牛肉堡", points: 350, type: "high" },
+      { label: "番茄牛肉堡", points: 220, type: "mid" },
+      { label: "薯條加大一份", points: 120, type: "mid" },
+      { label: "氣泡飲套餐升級", points: 100, type: "mid" },
+      { label: "只給你一片生菜", points: 40, type: "low" },
+      { label: "酸黃瓜加倍", points: 60, type: "low" },
+      { label: "洋蔥圈加一份", points: 80, type: "low" },
+      { label: "再轉一次！", points: 0, type: "special", special: "extraSpin" }
+    ];
+
+    const wheel = document.getElementById("wheel");
+    const spinButton = document.getElementById("spinButton");
+    const scoreSpan = document.getElementById("score");
+    const lastResultDiv = document.getElementById("lastResult");
+    const historyDiv = document.getElementById("history");
+
+    let totalScore = 0;
+    let isSpinning = false;
+    let currentRotation = 0;
+
+    // 動態產生轉盤背景（每一格顏色不同）
+    function buildWheelBackground() {
+      const colorsHigh = ["#ff7043", "#ff5722"];
+      const colorsMid = ["#ffca28", "#fdd835"];
+      const colorsLow = ["#81c784", "#66bb6a"];
+      const colorSpecial = "#ba68c8";
+
+      const step = 360 / items.length;
+      let gradientParts = [];
+      for (let i = 0; i < items.length; i++) {
+        const startAngle = i * step;
+        const endAngle = (i + 1) * step;
+        const item = items[i];
+
+        let color;
+        if (item.type === "high") {
+          color = colorsHigh[i % colorsHigh.length];
+        } else if (item.type === "mid") {
+          color = colorsMid[i % colorsMid.length];
+        } else if (item.type === "low") {
+          color = colorsLow[i % colorsLow.length];
+        } else {
+          color = colorSpecial;
+        }
+        gradientParts.push(`${color} ${startAngle}deg ${endAngle}deg`);
+      }
+      wheel.style.background = `conic-gradient(${gradientParts.join(",")})`;
+    }
+
+    buildWheelBackground();
+
+    function appendHistory(text) {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerHTML = text;
+      historyDiv.prepend(div);
+    }
+
+    function typeTag(type) {
+      if (type === "high") return "<span class='tag high'>高熱量</span>";
+      if (type === "mid") return "<span class='tag mid'>中熱量</span>";
+      if (type === "low") return "<span class='tag low'>低熱量</span>";
+      return "<span class='tag special'>特殊</span>";
+    }
+
+    function spin(extraSpinFlag = false) {
+      if (isSpinning) return;
+      isSpinning = true;
+      spinButton.disabled = true;
+
+      // 隨機選擇一個格子
+      const index = Math.floor(Math.random() * items.length);
+      const item = items[index];
+
+      const step = 360 / items.length;
+      const spins = 3 + Math.floor(Math.random() * 3); // 3~5 圈
+      // 計算要讓目標格子停在指針（上方）的角度
+      const targetRotation = spins * 360 - (index * step + step / 2);
+
+      currentRotation = targetRotation;
+
+      wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+      // 等動畫結束後處理結果
+      setTimeout(() => {
+        // 加分
+        let gained = item.points;
+        totalScore += gained;
+        scoreSpan.textContent = totalScore;
+
+        if (item.type === "special" && item.special === "extraSpin") {
+          lastResultDiv.innerHTML = `
+            抽到：<strong>${item.label}</strong> ${typeTag(item.type)}<br>
+            本次不加分，但獲得一次額外轉盤機會！
+          `;
+          appendHistory(`🎁 抽到 <span class="label">${item.label}</span>（額外轉一次）`);
+        } else {
+          lastResultDiv.innerHTML = `
+            抽到：<strong>${item.label}</strong> ${typeTag(item.type)}<br>
+            本次獲得 <strong>${gained}</strong> 分，目前總分 <strong>${totalScore}</strong>。
+          `;
+          appendHistory(`🍔 抽到 <span class="label">${item.label}</span>，+${gained} 分，總分：${totalScore}`);
+        }
+
+        isSpinning = false;
+        spinButton.disabled = false;
+
+        // 若是再轉一次，自動觸發一輪
+        if (item.type === "special" && item.special === "extraSpin" && !extraSpinFlag) {
+          setTimeout(() => spin(true), 800);
+        }
+      }, 3000); // 對應 CSS transition 3s
+    }
+
+    spinButton.addEventListener("click", () => {
+      spin();
+    });
+  </script>
+</body>
+</html>
