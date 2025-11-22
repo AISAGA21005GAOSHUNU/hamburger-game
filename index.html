@@ -1,254 +1,504 @@
-## 瘋狂漢堡轉盤（多人模式 + 排行榜）完整專案
-
-以下包含 3 個檔案：`index.html`、`styles.css`、`script.js`
-
----
-
-# index.html
-
-```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>瘋狂漢堡轉轉樂 - 多人對戰版</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
+  <title>漢堡對戰遊戲 🍔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #ffe9b8, #f5d0c5 40%, #f2f2f2 80%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      color: #222;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .game-wrapper {
+      max-width: 1100px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .current-player {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .player-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #222;
+      background: #ffe066;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .hint {
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .ingredient-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.05);
+      font-size: 0.85rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+      white-space: nowrap;
+    }
+
+    .ingredient-btn span.emoji {
+      font-size: 1.1rem;
+    }
+
+    .ingredient-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+      background: #fff;
+    }
+
+    .ingredient-btn:active {
+      transform: translateY(0px) scale(0.97);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    }
+
+    .main-area {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .main-area {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .player-panel {
+      background: rgba(255,255,255,0.9);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-panel.active {
+      box-shadow: 0 0 0 2px #ff922b, 0 6px 14px rgba(0,0,0,0.18);
+    }
+
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-name {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .player-name span.emoji {
+      font-size: 1.3rem;
+    }
+
+    .stack-info {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .reset-btn {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ffe8cc;
+      border: 1px solid #ffc078;
+    }
+
+    .reset-btn:hover {
+      background: #ffd8a8;
+    }
+
+    .burger-area {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 8px;
+      position: relative;
+      perspective: 800px;
+    }
+
+    .burger {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transform-origin: center bottom;
+      transition: transform 0.4s ease;
+    }
+
+    .burger.rotate {
+      transform: rotateY(360deg);
+    }
+
+    .bun {
+      width: 120px;
+      height: 28px;
+      border-radius: 50% 50% 40% 40%;
+      background: linear-gradient(180deg, #ffdf91, #f4a259);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    }
+
+    .bun.bottom {
+      border-radius: 40% 40% 50% 50%;
+      height: 24px;
+      background: linear-gradient(180deg, #f4a259, #d07e35);
+      box-shadow: 0 0 0 rgba(0,0,0,0.2);
+    }
+
+    .layer {
+      width: 110px;
+      border-radius: 20px;
+      padding: 4px 8px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      transform-origin: center;
+      animation: drop-in 0.18s ease-out;
+    }
+
+    .layer span.layer-emoji {
+      font-size: 1.2rem;
+      margin-right: 4px;
+    }
+
+    .layer span.layer-name {
+      flex: 1;
+    }
+
+    .layer span.layer-tag {
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+
+    @keyframes drop-in {
+      from {
+        transform: translateY(-12px) scale(0.96);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .footer-note {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .flash {
+      animation: flash 0.3s ease-out;
+    }
+
+    @keyframes flash {
+      from { box-shadow: 0 0 0 0 rgba(255,146,43,0.7); }
+      to   { box-shadow: 0 0 0 12px rgba(255,146,43,0); }
+    }
+  </style>
 </head>
 <body>
-  <div class="page">
+  <h1>漢堡對決 🍔</h1>
+  <div class="subtitle">
+    點擊食材堆出你的神級漢堡，按 <b>SPACE</b> 旋轉＆換人！
+  </div>
 
-    <!-- 玩家輸入彈窗 -->
-    <div id="playerModal" class="modal">
-      <div class="modal-content">
-        <h3>輸入玩家名稱</h3>
-        <p>使用逗號分隔，例如：小明, 小美, 多多老大</p>
-        <input id="playerInput" class="modal-input" placeholder="輸入玩家名稱" />
-        <button id="startGameBtn" class="btn modal-add">開始遊戲</button>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <div class="current-player">
+        目前玩家：
+        <div id="currentPlayerPill" class="player-pill">玩家 1</div>
+      </div>
+      <div class="hint">
+        🖱 點食材 = 幫目前玩家加料  
+        ⌨️ <b>SPACE</b> = 換玩家 + 兩個漢堡旋轉
+      </div>
+      <div class="buttons-row" id="controlsRow">
+        <button id="switchBtn" class="reset-btn">切換玩家 (SPACE)</button>
       </div>
     </div>
 
-    <header class="header">
-      <h1 class="game-title glow-title">瘋狂漢堡轉轉樂 - 多人對戰</h1>
-      <p class="game-subtitle">輪流轉盤、組建專屬漢堡，最後比誰最強！</p>
-    </header>
+    <div class="buttons-row" id="ingredientButtons"></div>
 
-    <h2 id="turnText" class="turn-text">等待開始...</h2>
-
-    <main class="main">
-
-      <!-- 轉盤區 -->
-      <section class="wheel-section">
-        <div class="wheel-wrapper">
-          <div class="pointer"></div>
-          <div id="wheel" class="wheel">
-            <div class="wheel-center">
-              <div class="center-emoji">🍔</div>
-              <div class="center-text">指針上方<br>為結果</div>
-            </div>
-            <div id="wheelLabels" class="wheel-labels"></div>
+    <div class="main-area">
+      <div id="player1Panel" class="player-panel active">
+        <div class="player-header">
+          <div class="player-name">
+            <span class="emoji">🧑‍🍳</span> 玩家 1
+          </div>
+          <div class="stack-info">
+            層數：<span id="p1Count">0</span>
+          </div>
+          <button class="reset-btn" data-player="1">清空</button>
+        </div>
+        <div class="burger-area">
+          <div class="burger" id="burger1">
+            <!-- bottom bun + layers + top bun 會由 JS 填 -->
           </div>
         </div>
-
-        <div class="wheel-controls">
-          <button id="spinButton" class="btn btn-spin">開始轉！</button>
-        </div>
-
-        <p class="spin-info">
-          剩餘轉動次數：<span id="remainingSpinsText">8</span>
-        </p>
-      </section>
-
-      <!-- 結果區 + 漢堡區 -->
-      <section class="result-section">
-
-        <div class="result-panel">
-          <h2>抽中結果</h2>
-          <div id="currentResult" class="current-result">尚未開始。</div>
-
-          <h3>歷史紀錄</h3>
-          <div id="historyList" class="history-list"></div>
-        </div>
-
-        <div class="burger-panel">
-          <h2>玩家漢堡</h2>
-
-          <div class="burger-visual">
-            <div class="burger-layer bun-top">🍞 麵包上層</div>
-            <div id="burgerLayers" class="burger-layers"></div>
-            <div class="burger-layer bun-bottom">🍞 麵包下層</div>
-            <div class="finish-effect" id="finishEffect"></div>
-          </div>
-
-          <div id="burgerStatus" class="burger-status">尚未加入任何食材。</div>
-        </div>
-
-      </section>
-
-      <!-- 排行榜 -->
-      <section id="rankSection" class="rank-section hidden">
-        <h2>🏆 最終排行榜</h2>
-        <div id="rankList" class="rank-list"></div>
-      </section>
-
-    </main>
-
-  </div>
-
-  <!-- 食材選擇彈窗 -->
-  <div id="choiceModal" class="modal hidden">
-    <div class="modal-content">
-      <h3 id="modalTitle"></h3>
-      <p id="modalDescription"></p>
-      <div class="modal-actions">
-        <button id="btnAdd" class="btn modal-add">加入漢堡</button>
-        <button id="btnSkip" class="btn modal-skip">跳過</button>
       </div>
+
+      <div id="player2Panel" class="player-panel">
+        <div class="player-header">
+          <div class="player-name">
+            <span class="emoji">👩‍🍳</span> 玩家 2
+          </div>
+          <div class="stack-info">
+            層數：<span id="p2Count">0</span>
+          </div>
+          <button class="reset-btn" data-player="2">清空</button>
+        </div>
+        <div class="burger-area">
+          <div class="burger" id="burger2">
+            <!-- bottom bun + layers + top bun 會由 JS 填 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      小提示：可以約好規則，例如「必須至少 5 層」、「要放鳳梨才算完成」，自由發揮。
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const ingredients = [
+      { id: "bun",      name: "漢堡",   emoji: "🍔", tag: "BUN" },
+      { id: "beef",     name: "牛肉",   emoji: "🐮", tag: "肉" },
+      { id: "pork",     name: "豬肉",   emoji: "🐷", tag: "肉" },
+      { id: "chickenL", name: "雞腿排", emoji: "🍗", tag: "肉" },
+      { id: "chickenB", name: "雞胸排", emoji: "🐔", tag: "肉" },
+      { id: "fish",     name: "魚排",   emoji: "🐟", tag: "海鮮" },
+      { id: "shrimp",   name: "蝦排",   emoji: "🦐", tag: "海鮮" },
+      { id: "duck",     name: "鴨肉",   emoji: "🦆", tag: "肉" },
+      { id: "bacon",    name: "培根",   emoji: "🥓", tag: "肉" },
+      { id: "cheese",   name: "起司",   emoji: "🧀", tag: "起司" },
+      { id: "lettuce",  name: "生菜",   emoji: "🥬", tag: "蔬菜" },
+      { id: "tomato",   name: "蕃茄",   emoji: "🍅", tag: "蔬菜" },
+      { id: "onion",    name: "洋蔥",   emoji: "🧅", tag: "蔬菜" },
+      { id: "pickle",   name: "小黃瓜", emoji: "🥒", tag: "蔬菜" },
+      { id: "corn",     name: "玉米",   emoji: "🌽", tag: "蔬菜" },
+      { id: "mushroom", name: "香菇",   emoji: "🍄", tag: "蔬菜" },
+      { id: "pineapple",name: "鳳梨",   emoji: "🍍", tag: "鳳梨" },
+      { id: "egg",      name: "蛋",     emoji: "🍳", tag: "蛋" },
+      { id: "mayo",     name: "美乃滋", emoji: "🤍", tag: "醬" },
+      { id: "chili",    name: "辣椒醬", emoji: "🌶️", tag: "醬" },
+      { id: "bbq",      name: "BBQ 醬", emoji: "🍖", tag: "醬" },
+      { id: "peanut",   name: "花生醬", emoji: "🥜", tag: "醬" },
+    ];
+
+    let currentPlayer = 1;
+    const stacks = {
+      1: [],
+      2: []
+    };
+
+    const ingredientButtonsContainer = document.getElementById("ingredientButtons");
+    const burger1El = document.getElementById("burger1");
+    const burger2El = document.getElementById("burger2");
+    const p1CountEl = document.getElementById("p1Count");
+    const p2CountEl = document.getElementById("p2Count");
+    const currentPlayerPill = document.getElementById("currentPlayerPill");
+    const player1Panel = document.getElementById("player1Panel");
+    const player2Panel = document.getElementById("player2Panel");
+    const switchBtn = document.getElementById("switchBtn");
+
+    function renderIngredientButtons() {
+      ingredientButtonsContainer.innerHTML = "";
+      ingredients.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "ingredient-btn";
+        btn.innerHTML = `
+          <span class="emoji">${item.emoji}</span>
+          <span>${item.name}</span>
+        `;
+        btn.addEventListener("click", () => {
+          addIngredientToCurrentPlayer(item);
+        });
+        ingredientButtonsContainer.appendChild(btn);
+      });
+    }
+
+    function addIngredientToCurrentPlayer(item) {
+      stacks[currentPlayer].push(item);
+      renderStacks();
+      flashActivePlayer();
+    }
+
+    function renderBurgerStack(container, stack) {
+      container.innerHTML = "";
+
+      const bottomBun = document.createElement("div");
+      bottomBun.className = "bun bottom";
+      bottomBun.textContent = "🍔";
+      container.appendChild(bottomBun);
+
+      stack.forEach(layerItem => {
+        const layer = document.createElement("div");
+        layer.className = "layer";
+        layer.innerHTML = `
+          <span class="layer-emoji">${layerItem.emoji}</span>
+          <span class="layer-name">${layerItem.name}</span>
+          <span class="layer-tag">${layerItem.tag}</span>
+        `;
+        container.insertBefore(layer, bottomBun.nextSibling);
+      });
+
+      const topBun = document.createElement("div");
+      topBun.className = "bun";
+      topBun.textContent = "🍔";
+      container.appendChild(topBun);
+    }
+
+    function renderStacks() {
+      renderBurgerStack(burger1El, stacks[1]);
+      renderBurgerStack(burger2El, stacks[2]);
+
+      p1CountEl.textContent = stacks[1].length;
+      p2CountEl.textContent = stacks[2].length;
+    }
+
+    function setCurrentPlayer(player) {
+      currentPlayer = player;
+      currentPlayerPill.textContent = `玩家 ${player}`;
+      currentPlayerPill.classList.remove("flash");
+      void currentPlayerPill.offsetWidth;
+      currentPlayerPill.classList.add("flash");
+
+      if (player === 1) {
+        player1Panel.classList.add("active");
+        player2Panel.classList.remove("active");
+      } else {
+        player2Panel.classList.add("active");
+        player1Panel.classList.remove("active");
+      }
+    }
+
+    function switchPlayerAndRotate() {
+      setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+      rotateBurgers();
+    }
+
+    function rotateBurgers() {
+      [burger1El, burger2El].forEach(el => {
+        el.classList.remove("rotate");
+        void el.offsetWidth;
+        el.classList.add("rotate");
+      });
+    }
+
+    function flashActivePlayer() {
+      const panel = currentPlayer === 1 ? player1Panel : player2Panel;
+      panel.classList.remove("flash");
+      void panel.offsetWidth;
+      panel.classList.add("flash");
+    }
+
+    function resetPlayerStack(player) {
+      stacks[player] = [];
+      renderStacks();
+    }
+
+    switchBtn.addEventListener("click", switchPlayerAndRotate);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        switchPlayerAndRotate();
+      }
+    });
+
+    document.querySelectorAll(".reset-btn[data-player]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = Number(btn.getAttribute("data-player"));
+        resetPlayerStack(p);
+      });
+    });
+
+    renderIngredientButtons();
+    renderStacks();
+    setCurrentPlayer(1);
+  </script>
 </body>
 </html>
-```
-
----
-
-# styles.css
-
-```css
-body {
-  margin: 0;
-  background: radial-gradient(circle at top, #ffdd9c 0%, #f7971e 40%, #5d4037 100%);
-  color: #fffde8;
-  font-family: "Microsoft JhengHei", sans-serif;
-}
-.page { padding: 16px; }
-.header { text-align: center; margin-bottom: 10px; }
-.game-title { font-size: 30px; font-weight: 900; }
-.turn-text { text-align:center; font-size:20px; margin-bottom:10px; }
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.modal.hidden { display: none; }
-.modal-content {
-  background: #fff4da;
-  padding: 20px;
-  border-radius: 16px;
-  width: 80%; max-width: 300px;
-  text-align: center;
-  color: #6d3600;
-}
-.modal-input {
-  width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: none;
-}
-
-.btn {
-  padding: 10px 24px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 800;
-  border: none;
-  margin: 6px;
-}
-.btn-spin { background: linear-gradient(135deg,#ffdd6a,#ff8a00); }
-.btn-reset { background: #5d4037; color:#ffeec0; }
-.modal-add { background: #ffb300; }
-.modal-skip { background:#795548; color:#ffeccf; }
-
-.wheel-section {
-  background: rgba(0,0,0,0.4);
-  padding:16px; border-radius:18px; text-align:center;
-  margin-bottom:20px;
-}
-.pointer {
-  position:absolute; top:-12px; left:50%; transform:translateX(-50%);
-  width:0; border-left:20px solid transparent; border-right:20px solid transparent;
-  border-bottom:28px solid #ffe900; z-index:10;
-}
-.wheel {
-  width:300px; height:300px; margin:auto;
-  border-radius:50%; border:10px solid #ffebc0;
-  overflow:hidden; background:#3b2417;
-  position:relative;
-  transition: transform 3s cubic-bezier(.19,1,.22,1);
-}
-.wheel-center {
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:100px; height:100px; border-radius:50%; background:#ffcb59;
-  border:4px solid #fff5dc; text-align:center; padding-top:10px;
-}
-
-.segment-label {
-  position:absolute; left:50%; top:50%; width:40px; text-align:center;
-  font-size:24px; transform-origin:center;
-}
-.segment-label.active { transform:scale(1.4); filter:brightness(1.5); }
-
-.result-section {
-  display:grid; grid-template-columns:1fr 1fr; gap:12px;
-}
-.result-panel, .burger-panel {
-  background:rgba(0,0,0,0.4); padding:12px; border-radius:16px;
-}
-.burger-visual {
-  background:rgba(0,0,0,0.3); padding:10px; min-height:240px;
-  border-radius:16px; display:flex; flex-direction:column; justify-content:flex-end;
-  position:relative;
-}
-.burger-layer { background:#ffe0b9; padding:6px; border-radius:999px; text-align:center; margin:4px 0; }
-
-/* 排行榜 */
-.rank-section {
-  background:rgba(0,0,0,0.45);
-  padding:16px; border-radius:16px; margin-top:20px;
-}
-.rank-section.hidden { display:none; }
-.rank-list { padding:6px; }
-```
-
----
-
-# script.js
-
-```javascript
-// ========================== 玩家資料 ===========================
-let players = [];
-let currentPlayerIndex = 0;
-let burgers = {}; // 每位玩家的漢堡
-
-const MAX_SPINS = 8;
-let remainingSpins = MAX_SPINS;
-
-// 分數系統（平衡版）
-const SCORE_TABLE = {
-  meat: 40,
-  cheese: 30,
-  veggie: 15,
-  sauce: 20,
-  special: 60
-};
-
-const BONUS = {
-  "牛肉排": 5,
-  "雙倍起司": 8,
-  "培根": 10,
-  "超大漢堡": 20
-};
-
-// 食材設定
-const SEGMENTS = [
-  { label:"牛肉排", icon:"🥩", type:"meat", weight:3 },
-  { label:"雞肉排", icon:"🍗", type:"meat", weight:3 },
-  { label:"豬肉排", icon:"🍖", type:"meat", weight:2 },
-  { label:"素肉排", icon:"🫘", type:"veggie", weight:1 },
-  { label:"起司", icon:"🧀", type:"cheese", weight:4 },
-  { label:"雙倍起司", icon:"🧀", type:
-
-```
