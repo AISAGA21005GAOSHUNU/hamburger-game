@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>漢堡對決 🍔（含分數）</title>
+  <title>漢堡對決 🍔（含音效＋分數）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,8 +18,6 @@
     }
     h1 { font-size: 2rem; margin-bottom: 4px; }
     .subtitle { font-size: 0.9rem; opacity: 0.8; margin-bottom: 16px; }
-
-    /* --- 版面樣式同前略 --- */
 
     .game-wrapper { max-width: 1100px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
     .top-bar {
@@ -37,7 +35,9 @@
       border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: flex;
       align-items: center; gap: 4px; cursor: pointer;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: 0.1s;
     }
+    .ingredient-btn:active { transform: scale(0.95); }
 
     .main-area { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
     @media(max-width:768px){ .main-area{ grid-template-columns:1fr; } }
@@ -50,7 +50,6 @@
 
     .player-header { display:flex; justify-content:space-between; align-items:center; gap: 8px; }
     .stack-info { font-size:0.8rem; opacity:0.8; }
-
     .score-info { font-size:0.9rem; font-weight:700; color:#b34300; }
 
     .burger-area { display:flex; align-items:flex-end; justify-content:center; padding:8px; perspective:800px; }
@@ -66,7 +65,10 @@
 
 <body>
   <h1>漢堡對決 🍔</h1>
-  <div class="subtitle">點食材堆漢堡，按 SPACE 換人＋旋轉，分數即時加總！</div>
+  <div class="subtitle">點食材堆漢堡，音效、分數、雙人切換，全都自動！</div>
+
+  <!-- 🔊 點擊音效 -->
+  <audio id="clickSound" src="click.mp3" preload="auto"></audio>
 
   <div class="game-wrapper">
     <div class="top-bar">
@@ -104,6 +106,9 @@
   </div>
 
 <script>
+// ========================
+// 食材 + 分數
+// ========================
 const ingredients = [
   { id:"bun",  name:"漢堡", emoji:"🍔", score:60 },
   { id:"beef", name:"牛肉", emoji:"🐮", score:45 },
@@ -130,10 +135,12 @@ const ingredients = [
 ];
 
 let currentPlayer = 1;
-
 const stacks = { 1: [], 2: [] };
 const scores = { 1: 0, 2: 0 };
 
+// ========================
+// DOM
+// ========================
 const ingredientButtonsContainer = document.getElementById("ingredientButtons");
 const burger1El = document.getElementById("burger1");
 const burger2El = document.getElementById("burger2");
@@ -143,7 +150,11 @@ const p1ScoreEl = document.getElementById("p1Score");
 const p2ScoreEl = document.getElementById("p2Score");
 const currentPlayerPill = document.getElementById("currentPlayerPill");
 const switchBtn = document.getElementById("switchBtn");
+const clickSound = document.getElementById("clickSound");
 
+// ========================
+// 按鈕渲染
+// ========================
 function renderIngredientButtons() {
   ingredientButtonsContainer.innerHTML = "";
   ingredients.forEach(item => {
@@ -155,12 +166,22 @@ function renderIngredientButtons() {
   });
 }
 
+// ========================
+// 加食材 + 音效
+// ========================
 function addIngredient(item) {
   stacks[currentPlayer].push(item);
   scores[currentPlayer] += item.score;
   renderStacks();
+
+  // 播放音效
+  clickSound.currentTime = 0;
+  clickSound.play().catch(()=>{});
 }
 
+// ========================
+// 渲染堆疊
+// ========================
 function renderBurgerStack(container, stack) {
   container.innerHTML = "";
 
@@ -193,6 +214,9 @@ function renderStacks() {
   p2ScoreEl.textContent = scores[2];
 }
 
+// ========================
+// 切換玩家 + 旋轉效果
+// ========================
 function switchPlayer() {
   currentPlayer = currentPlayer === 1 ? 2 : 1;
   currentPlayerPill.textContent = `玩家 ${currentPlayer}`;
@@ -216,6 +240,9 @@ document.addEventListener("keydown", e => {
 
 switchBtn.addEventListener("click", switchPlayer);
 
+// ========================
+// 清空按鈕
+// ========================
 document.querySelectorAll("[data-player]").forEach(btn => {
   btn.addEventListener("click", () => {
     const p = Number(btn.getAttribute("data-player"));
@@ -225,6 +252,9 @@ document.querySelectorAll("[data-player]").forEach(btn => {
   });
 });
 
+// ========================
+// 初始化
+// ========================
 renderIngredientButtons();
 renderStacks();
 </script>
