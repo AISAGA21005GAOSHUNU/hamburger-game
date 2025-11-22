@@ -65,10 +65,7 @@
 
 <body>
   <h1>漢堡對決 🍔</h1>
-  <div class="subtitle">點食材堆漢堡，音效、分數、雙人切換，全都自動！</div>
-
-  <!-- 🔊 點擊音效 -->
-  <audio id="clickSound" src="click.mp3" preload="auto"></audio>
+  <div class="subtitle">點食材堆漢堡，每一下都有嗶一聲，還能雙人對戰算分！</div>
 
   <div class="game-wrapper">
     <div class="top-bar">
@@ -150,7 +147,41 @@ const p1ScoreEl = document.getElementById("p1Score");
 const p2ScoreEl = document.getElementById("p2Score");
 const currentPlayerPill = document.getElementById("currentPlayerPill");
 const switchBtn = document.getElementById("switchBtn");
-const clickSound = document.getElementById("clickSound");
+
+// ========================
+// Web Audio 產生「嗶」聲
+// ========================
+let audioCtx = null;
+
+function playClickSound() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;                           // 太舊的瀏覽器就安靜玩
+
+  if (!audioCtx) {
+    audioCtx = new AC();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "square";
+  osc.frequency.value = 880;                 // 頻率高一點，比較有「按下去」的感覺
+
+  const now = audioCtx.currentTime;
+  const duration = 0.08;
+
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(now);
+  osc.stop(now + duration);
+}
 
 // ========================
 // 按鈕渲染
@@ -167,16 +198,13 @@ function renderIngredientButtons() {
 }
 
 // ========================
-// 加食材 + 音效
+// 加食材 + 播聲音
 // ========================
 function addIngredient(item) {
   stacks[currentPlayer].push(item);
   scores[currentPlayer] += item.score;
   renderStacks();
-
-  // 播放音效
-  clickSound.currentTime = 0;
-  clickSound.play().catch(()=>{});
+  playClickSound();
 }
 
 // ========================
