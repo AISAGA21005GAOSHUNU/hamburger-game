@@ -17,7 +17,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* 漢堡配色背景 */
       background: radial-gradient(circle at top, #ffecb3 0, #f57c00 35%, #5d4037 100%);
       color: #fdf7e9;
     }
@@ -259,20 +258,16 @@
       top: 50%;
       left: 50%;
       transform-origin: center center;
-      width: 80px;
-      margin-left: -40px;
+      width: 46px;
+      margin-left: -23px;
       text-align: center;
-      font-size: 11px;
+      font-size: 22px;
+      line-height: 1;
       color: #212121;
-      font-weight: 700;
-      text-shadow: 0 1px 1px rgba(255,255,255,0.6);
-      line-height: 1.2;
     }
 
     .segment-label .icon {
       display: block;
-      font-size: 18px;
-      margin-bottom: 2px;
     }
 
     @media (max-width: 880px) {
@@ -348,7 +343,7 @@
       { label: "氣泡飲套餐升級", icon: "🥤", points: 110, type: "mid" },
       { label: "只給你一片生菜", icon: "🥬", points: 40, type: "low" },
       { label: "酸黃瓜加倍", icon: "🥒", points: 60, type: "low" },
-      { label: "洋葱圈加一份", icon: "🧅", points: 90, type: "low" },
+      { label: "洋蔥圈加一份", icon: "🧅", points: 90, type: "low" },
       { label: "再轉一次！", icon: "🎲", points: 0, type: "special", special: "extraSpin" }
     ];
 
@@ -363,7 +358,7 @@
     let isSpinning = false;
     let currentRotation = 0;
 
-    // ==== 聲音系統（用 Web Audio 產生簡單音效） ====
+    // ==== 聲音系統 ====
     let audioCtx = null;
     let tickIntervalId = null;
 
@@ -399,7 +394,6 @@
     }
 
     function startTickSound() {
-      // 先來一聲開始音效
       playBeep(900, 0.09, 0.28);
       if (tickIntervalId) clearInterval(tickIntervalId);
       tickIntervalId = setInterval(() => {
@@ -415,7 +409,6 @@
     }
 
     function playStopSound() {
-      // 結束叮一聲
       playBeep(540, 0.14, 0.28);
       setTimeout(() => playBeep(880, 0.09, 0.22), 80);
     }
@@ -449,25 +442,22 @@
       wheel.style.background = `conic-gradient(${gradientParts.join(",")})`;
     }
 
-    // ==== 產生每一格的文字 + 圖案標籤 ====
+    // ==== 產生每一格的圖示標籤（不再放文字） ====
     function buildWheelLabels() {
       const step = 360 / items.length;
       wheelLabelsContainer.innerHTML = "";
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        const angle = i * step + step / 2; // 每格中心角度
+        const angle = i * step + step / 2;
 
         const labelDiv = document.createElement("div");
         labelDiv.className = "segment-label";
-        labelDiv.innerHTML = `
-          <span class="icon">${item.icon}</span>
-          <span>${item.label}</span>
-        `;
+        labelDiv.innerHTML = `<span class="icon" title="${item.label}">${item.icon}</span>`;
 
-        // 透過旋轉 + 位移把文字排在圓周上
+        // 放到外圈一點，避免擠在中間
         labelDiv.style.transform =
-          `rotate(${angle}deg) translate(0, -44%) rotate(${-angle}deg)`;
+          `rotate(${angle}deg) translate(0, -72%) rotate(${-angle}deg)`;
 
         wheelLabelsContainer.appendChild(labelDiv);
       }
@@ -497,22 +487,19 @@
 
       const ctx = getAudioCtx();
       if (ctx && ctx.state === "suspended") {
-        // 某些瀏覽器需要用戶互動後 resume
         ctx.resume();
       }
 
-      // 隨機選一個格子
       const index = Math.floor(Math.random() * items.length);
       const item = items[index];
 
       const step = 360 / items.length;
-      const spins = 3 + Math.floor(Math.random() * 3); // 3~5 圈
+      const spins = 3 + Math.floor(Math.random() * 3);
       const targetRotation = spins * 360 - (index * step + step / 2);
 
       currentRotation = targetRotation;
       wheel.style.transform = `rotate(${targetRotation}deg)`;
 
-      // 開始轉動音效
       startTickSound();
 
       setTimeout(() => {
@@ -540,11 +527,10 @@
         isSpinning = false;
         spinButton.disabled = false;
 
-        // 若是再轉一次，自動觸發一輪（避免無限遞迴，加旗標）
         if (item.type === "special" && item.special === "extraSpin" && !extraSpinFlag) {
           setTimeout(() => spin(true), 900);
         }
-      }, 3000); // 對應 CSS transition 3s
+      }, 3000);
     }
 
     spinButton.addEventListener("click", () => {
