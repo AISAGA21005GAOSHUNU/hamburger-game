@@ -1,541 +1,233 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <title>漢堡宇宙文字轉盤</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top, #ffecb3 0, #f57c00 35%, #5d4037 100%);
-      color: #fdf7e9;
-    }
-
-    .game-container {
-      background: rgba(40, 26, 16, 0.96);
-      padding: 24px 28px;
-      border-radius: 24px;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.65);
-      max-width: 960px;
-      width: 100%;
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 22px;
-      border: 2px solid rgba(255, 202, 40, 0.6);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .game-container::before {
-      content: "🍔";
-      position: absolute;
-      font-size: 120px;
-      opacity: 0.06;
-      right: -10px;
-      top: -20px;
-    }
-
-    .title {
-      grid-column: 1 / -1;
-      text-align: center;
-      font-size: 26px;
-      font-weight: 800;
-      margin-bottom: 4px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .subtitle {
-      grid-column: 1 / -1;
-      text-align: center;
-      font-size: 13px;
-      color: #ffe6b3;
-      margin-bottom: 10px;
-    }
-
-    .wheel-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding-top: 4px;
-    }
-
-    .wheel {
-      width: 340px;
-      height: 340px;
-      border-radius: 50%;
-      border: 8px solid #f5f5f5;
-      position: relative;
-      transition: transform 3s cubic-bezier(0.22, 0.61, 0.36, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #3e2723;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.7);
-    }
-
-    .wheel-center {
-      position: absolute;
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ffe082 0, #ffca28 40%, #f57c00 100%);
-      border: 4px solid #fbe9e7;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 12px;
-      padding: 4px;
-      z-index: 3;
-      color: #4e342e;
-      font-weight: 700;
-    }
-
-    .wheel-center .emoji {
-      font-size: 26px;
-      line-height: 1;
-    }
-
-    .pointer {
-      position: absolute;
-      top: -2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-bottom: 26px solid #ffeb3b;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-      z-index: 4;
-    }
-
-    .pointer::after {
-      content: "";
-      position: absolute;
-      top: 18px;
-      left: -12px;
-      right: -12px;
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.28);
-    }
-
-    .spin-button {
-      margin-top: 20px;
-      padding: 12px 26px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #ffca28, #ff7043);
-      color: #3e2723;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.75);
-      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-    }
-
-    .spin-button:active {
-      transform: translateY(1px) scale(0.97);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.8);
-    }
-
-    .spin-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .info-panel {
-      border-radius: 18px;
-      background: linear-gradient(145deg, #4e342e, #3e2723);
-      padding: 16px 18px;
-      box-shadow: inset 0 0 0 1px rgba(255, 224, 178, 0.18);
-    }
-
-    .info-panel h2 {
-      font-size: 18px;
-      margin-top: 0;
-      margin-bottom: 8px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #ffcc80;
-    }
-
-    .score {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .score span {
-      color: #ffeb3b;
-      text-shadow: 0 0 8px rgba(255, 235, 59, 0.7);
-    }
-
-    .last-result {
-      font-size: 14px;
-      margin-bottom: 12px;
-      min-height: 42px;
-      line-height: 1.6;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      background: #5d4037;
-      margin-right: 4px;
-      margin-bottom: 4px;
-      white-space: nowrap;
-    }
-
-    .tag.high { background: #d32f2f; }
-    .tag.mid { background: #f57c00; }
-    .tag.low { background: #388e3c; }
-    .tag.special { background: #7b1fa2; }
-
-    .history {
-      font-size: 13px;
-      max-height: 180px;
-      overflow-y: auto;
-      padding-right: 6px;
-      border-radius: 10px;
-      background: rgba(33, 22, 15, 0.8);
-      padding: 8px 10px;
-    }
-
-    .history-item {
-      border-bottom: 1px dashed rgba(255,255,255,0.08);
-      padding: 4px 0;
-    }
-
-    .history-item:last-child {
-      border-bottom: none;
-    }
-
-    .history-item span.label {
-      font-weight: 600;
-    }
-
-    .tips {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #ffe0b2;
-      line-height: 1.5;
-    }
-
-    .wheel-labels {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .segment-label {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-origin: center center;
-      width: 46px;
-      margin-left: -23px;
-      text-align: center;
-      font-size: 22px;
-      line-height: 1;
-      color: #212121;
-    }
-
-    .segment-label .icon {
-      display: block;
-    }
-
-    @media (max-width: 880px) {
-      .game-container {
-        grid-template-columns: 1fr;
-      }
-      .wheel {
-        width: 300px;
-        height: 300px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="game-container">
-    <div class="title">漢堡宇宙 · 文字轉盤</div>
-    <div class="subtitle">按下「開始轉！」，跟著漢堡、三明治一起旋轉你的命運。</div>
-
-    <!-- 左側：轉盤區 -->
-    <div>
-      <div class="wheel-wrapper">
-        <div class="pointer"></div>
-        <div id="wheel" class="wheel">
-          <div class="wheel-center">
-            <div class="emoji">🍔</div>
-            指針上方<br>就是結果
-          </div>
-          <div id="wheelLabels" class="wheel-labels"></div>
-        </div>
-      </div>
-      <div style="text-align:center;">
-        <button id="spinButton" class="spin-button">開始轉！</button>
-      </div>
-    </div>
-
-    <!-- 右側：資訊區 -->
-    <div class="info-panel">
-      <h2>狀態</h2>
-      <div class="score">總分：<span id="score">0</span></div>
-      <div class="last-result" id="lastResult">還沒開始，先腦補一口最完美的漢堡。</div>
-
-      <div style="margin-bottom: 10px;">
-        <span class="tag high">🔥 高熱量高分</span>
-        <span class="tag mid">🍟 中熱量中分</span>
-        <span class="tag low">🥬 低熱量小安穩</span>
-        <span class="tag special">✨ 特殊事件</span>
-      </div>
-
-      <h2>歷史紀錄</h2>
-      <div id="history" class="history"></div>
-
-      <div class="tips">
-        小玩法建議：<br>
-        ‧ 每個人輪流轉 5～8 次，最後比誰的卡路里最高。<br>
-        ‧ 規則自定：例如抽到「再轉一次」時，要用廣告腔唸出該項目才能生效。<br>
-        ‧ 想改題目，只要打開 index.html，修改最下面的 items 陣列即可。
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // === 遊戲資料：漢堡 + 三明治 + 配菜 ===
-    const items = [
-      { label: "起司牛肉堡", icon: "🍔", points: 320, type: "high" },
-      { label: "香脆雞腿堡", icon: "🍗", points: 280, type: "high" },
-      { label: "培根起司堡", icon: "🥓", points: 300, type: "high" },
-      { label: "生菜輕盈堡", icon: "🥬", points: 150, type: "mid" },
-      { label: "雙層牛肉堡", icon: "🍔", points: 360, type: "high" },
-      { label: "番茄牛肉堡", icon: "🍅", points: 230, type: "mid" },
-      { label: "火腿起司三明治", icon: "🥪", points: 210, type: "mid" },
-      { label: "總匯豪華三明治", icon: "🥪", points: 260, type: "high" },
-      { label: "薯條加大一份", icon: "🍟", points: 140, type: "mid" },
-      { label: "氣泡飲套餐升級", icon: "🥤", points: 110, type: "mid" },
-      { label: "只給你一片生菜", icon: "🥬", points: 40, type: "low" },
-      { label: "酸黃瓜加倍", icon: "🥒", points: 60, type: "low" },
-      { label: "洋蔥圈加一份", icon: "🧅", points: 90, type: "low" },
-      { label: "再轉一次！", icon: "🎲", points: 0, type: "special", special: "extraSpin" }
-    ];
-
-    const wheel = document.getElementById("wheel");
-    const wheelLabelsContainer = document.getElementById("wheelLabels");
-    const spinButton = document.getElementById("spinButton");
-    const scoreSpan = document.getElementById("score");
-    const lastResultDiv = document.getElementById("lastResult");
-    const historyDiv = document.getElementById("history");
-
-    let totalScore = 0;
-    let isSpinning = false;
-    let currentRotation = 0;
-
-    // ==== 聲音系統 ====
-    let audioCtx = null;
-    let tickIntervalId = null;
-
-    function getAudioCtx() {
-      if (!audioCtx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (AC) {
-          audioCtx = new AC();
-        }
-      }
-      return audioCtx;
-    }
-
-    function playBeep(freq = 800, duration = 0.06, volume = 0.2) {
-      const ctx = getAudioCtx();
-      if (!ctx) return;
-
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "square";
-      osc.frequency.value = freq;
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      const now = ctx.currentTime;
-      gain.gain.setValueAtTime(volume, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      osc.start(now);
-      osc.stop(now + duration);
-    }
-
-    function startTickSound() {
-      playBeep(900, 0.09, 0.28);
-      if (tickIntervalId) clearInterval(tickIntervalId);
-      tickIntervalId = setInterval(() => {
-        playBeep(650 + Math.random() * 80, 0.04, 0.15);
-      }, 180);
-    }
-
-    function stopTickSound() {
-      if (tickIntervalId) {
-        clearInterval(tickIntervalId);
-        tickIntervalId = null;
-      }
-    }
-
-    function playStopSound() {
-      playBeep(540, 0.14, 0.28);
-      setTimeout(() => playBeep(880, 0.09, 0.22), 80);
-    }
-
-    // ==== 產生轉盤顏色 ====
-    function buildWheelBackground() {
-      const colorsHigh = ["#ffb74d", "#ff8a65"];
-      const colorsMid  = ["#ffe082", "#ffcc80"];
-      const colorsLow  = ["#c5e1a5", "#aed581"];
-      const colorSpecial = "#ce93d8";
-
-      const step = 360 / items.length;
-      let gradientParts = [];
-      for (let i = 0; i < items.length; i++) {
-        const startAngle = i * step;
-        const endAngle = (i + 1) * step;
-        const item = items[i];
-
-        let color;
-        if (item.type === "high") {
-          color = colorsHigh[i % colorsHigh.length];
-        } else if (item.type === "mid") {
-          color = colorsMid[i % colorsMid.length];
-        } else if (item.type === "low") {
-          color = colorsLow[i % colorsLow.length];
-        } else {
-          color = colorSpecial;
-        }
-        gradientParts.push(`${color} ${startAngle}deg ${endAngle}deg`);
-      }
-      wheel.style.background = `conic-gradient(${gradientParts.join(",")})`;
-    }
-
-    // ==== 產生每一格的圖示標籤（不再放文字） ====
-    function buildWheelLabels() {
-      const step = 360 / items.length;
-      wheelLabelsContainer.innerHTML = "";
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const angle = i * step + step / 2;
-
-        const labelDiv = document.createElement("div");
-        labelDiv.className = "segment-label";
-        labelDiv.innerHTML = `<span class="icon" title="${item.label}">${item.icon}</span>`;
-
-        // 放到外圈一點，避免擠在中間
-        labelDiv.style.transform =
-          `rotate(${angle}deg) translate(0, -72%) rotate(${-angle}deg)`;
-
-        wheelLabelsContainer.appendChild(labelDiv);
-      }
-    }
-
-    buildWheelBackground();
-    buildWheelLabels();
-
-    function appendHistory(text) {
-      const div = document.createElement("div");
-      div.className = "history-item";
-      div.innerHTML = text;
-      historyDiv.prepend(div);
-    }
-
-    function typeTag(type) {
-      if (type === "high") return "<span class='tag high'>高熱量</span>";
-      if (type === "mid") return "<span class='tag mid'>中熱量</span>";
-      if (type === "low") return "<span class='tag low'>低熱量</span>";
-      return "<span class='tag special'>特殊</span>";
-    }
-
-    function spin(extraSpinFlag = false) {
-      if (isSpinning) return;
-      isSpinning = true;
-      spinButton.disabled = true;
-
-      const ctx = getAudioCtx();
-      if (ctx && ctx.state === "suspended") {
-        ctx.resume();
-      }
-
-      const index = Math.floor(Math.random() * items.length);
-      const item = items[index];
-
-      const step = 360 / items.length;
-      const spins = 3 + Math.floor(Math.random() * 3);
-      const targetRotation = spins * 360 - (index * step + step / 2);
-
-      currentRotation = targetRotation;
-      wheel.style.transform = `rotate(${targetRotation}deg)`;
-
-      startTickSound();
-
-      setTimeout(() => {
-        stopTickSound();
-        playStopSound();
-
-        let gained = item.points;
-        totalScore += gained;
-        scoreSpan.textContent = totalScore;
-
-        if (item.type === "special" && item.special === "extraSpin") {
-          lastResultDiv.innerHTML = `
-            抽到：<strong>${item.icon} ${item.label}</strong> ${typeTag(item.type)}<br>
-            本次不加分，但獲得一次額外轉盤機會！
-          `;
-          appendHistory(`🎁 抽到 <span class="label">${item.icon} ${item.label}</span>（額外轉一次）`);
-        } else {
-          lastResultDiv.innerHTML = `
-            抽到：<strong>${item.icon} ${item.label}</strong> ${typeTag(item.type)}<br>
-            本次獲得 <strong>${gained}</strong> 分，目前總分 <strong>${totalScore}</strong>。
-          `;
-          appendHistory(`🍔 抽到 <span class="label">${item.icon} ${item.label}</span>，+${gained} 分，總分：${totalScore}`);
-        }
-
-        isSpinning = false;
-        spinButton.disabled = false;
-
-        if (item.type === "special" && item.special === "extraSpin" && !extraSpinFlag) {
-          setTimeout(() => spin(true), 900);
-        }
-      }, 3000);
-    }
-
-    spinButton.addEventListener("click", () => {
-      spin();
-    });
-  </script>
-</body>
-</html>
+// ===============================
+// 🔧 遊戲設定
+// ===============================
+const MAX_SPINS = 8;        // 每局最多轉幾次
+const SPIN_DURATION_MS = 3000;
+
+// 食材設定（可自由擴充）
+const SEGMENTS = [
+  { label: "牛肉排", icon: "🥩", type: "meat", weight: 3 },
+  { label: "雞肉排", icon: "🍗", type: "meat", weight: 3 },
+  { label: "豬肉排", icon: "🍖", type: "meat", weight: 2 },
+  { label: "素肉排", icon: "🫘", type: "veggie", weight: 1 },
+  { label: "起司", icon: "🧀", type: "cheese", weight: 4 },
+  { label: "雙倍起司", icon: "🧀", type: "cheese", weight: 2 },
+  { label: "生菜", icon: "🥬", type: "veggie", weight: 4 },
+  { label: "番茄", icon: "🍅", type: "veggie", weight: 4 },
+  { label: "酸黃瓜", icon: "🥒", type: "veggie", weight: 3 },
+  { label: "培根", icon: "🥓", type: "meat", weight: 2 },
+  { label: "醬汁", icon: "🥫", type: "sauce", weight: 3 },
+  { label: "超大漢堡", icon: "🍔", type: "special", weight: 1 }
+];
+
+// ===============================
+// DOM
+// ===============================
+const wheel = document.getElementById("wheel");
+const wheelLabels = document.getElementById("wheelLabels");
+const spinButton = document.getElementById("spinButton");
+const resetButton = document.getElementById("resetBurgerButton");
+
+const remainingText = document.getElementById("remainingSpinsText");
+const currentResult = document.getElementById("currentResult");
+const historyList = document.getElementById("historyList");
+const burgerLayers = document.getElementById("burgerLayers");
+const burgerStatus = document.getElementById("burgerStatus");
+
+// ✨ 選擇彈窗
+const modal = document.getElementById("choiceModal");
+const modalTitle = document.getElementById("modalTitle");
+const modalDesc = document.getElementById("modalDescription");
+const btnAdd = document.getElementById("btnAdd");
+const btnSkip = document.getElementById("btnSkip");
+
+// ===============================
+// 狀態
+// ===============================
+let currentRotation = 0;
+let isSpinning = false;
+let remainingSpins = MAX_SPINS;
+let burger = [];
+let pendingSegment = null;
+let lastActiveIndex = null;
+
+// ===============================
+// 初始化
+// ===============================
+initWheel();
+updateRemaining();
+
+// ===============================
+// 建立轉盤背景（色塊）
+// ===============================
+function initWheel() {
+  const total = SEGMENTS.length;
+  const step = 360 / total;
+
+  // 背景色塊
+  wheel.style.background = `conic-gradient(
+    ${SEGMENTS.map((s, i) => {
+      const a1 = i * step;
+      const a2 = (i + 1) * step;
+      const color = getColorByType(s.type);
+      return `${color} ${a1}deg ${a2}deg`;
+    }).join(",")}
+  )`;
+
+  // icon 在圓周上
+  wheelLabels.innerHTML = "";
+  SEGMENTS.forEach((s, i) => {
+    const angle = i * step + step / 2;
+    const el = document.createElement("div");
+    el.className = "segment-label";
+    el.dataset.index = i;
+    el.innerHTML = `<span>${s.icon}</span>`;
+    el.style.transform = `rotate(${angle}deg) translate(0, -78%) rotate(${-angle}deg)`;
+    wheelLabels.appendChild(el);
+  });
+}
+
+// 顏色對應
+function getColorByType(type) {
+  switch (type) {
+    case "meat": return "#ffb74d";
+    case "veggie": return "#a5d6a7";
+    case "cheese": return "#ffe082";
+    case "sauce": return "#ffab91";
+    case "special": return "#ce93d8";
+    default: return "#ffe0b2";
+  }
+}
+
+// ===============================
+// 抽獎 → 權重隨機
+// ===============================
+function getRandomIndex() {
+  const total = SEGMENTS.reduce((sum, s) => sum + s.weight, 0);
+  let r = Math.random() * total;
+
+  for (let i = 0; i < SEGMENTS.length; i++) {
+    r -= SEGMENTS[i].weight;
+    if (r <= 0) return i;
+  }
+  return SEGMENTS.length - 1;
+}
+
+// ===============================
+// 開始轉盤
+// ===============================
+spinButton.addEventListener("click", () => {
+  if (isSpinning) return;
+  if (remainingSpins <= 0) return;
+
+  isSpinning = true;
+  spinButton.disabled = true;
+
+  const index = getRandomIndex();
+  const step = 360 / SEGMENTS.length;
+
+  const fullSpins = 3 + Math.floor(Math.random() * 3);
+  const target = fullSpins * 360 - (index * step + step / 2);
+
+  currentRotation = target;
+  wheel.style.transform = `rotate(${target}deg)`;
+
+  // 清除前一個高亮
+  if (lastActiveIndex !== null) {
+    wheelLabels.querySelector(`[data-index="${lastActiveIndex}"]`)?.classList.remove("active");
+  }
+
+  setTimeout(() => {
+    isSpinning = false;
+    spinButton.disabled = false;
+    remainingSpins--;
+    updateRemaining();
+
+    pendingSegment = SEGMENTS[index];
+    lastActiveIndex = index;
+
+    showChoiceModal(pendingSegment);
+  }, SPIN_DURATION_MS);
+});
+
+function updateRemaining() {
+  remainingText.textContent = remainingSpins;
+}
+
+// ===============================
+// ✨ 彈窗邏輯：加入 or 隱藏
+// ===============================
+function showChoiceModal(seg) {
+  modalTitle.textContent = `抽到：${seg.label}`;
+  modalDesc.innerHTML = `<div style="font-size:32px;">${seg.icon}</div>是否加入漢堡？`;
+
+  modal.classList.remove("hidden");
+
+  // 高亮
+  wheelLabels.querySelector(`[data-index="${lastActiveIndex}"]`).classList.add("active");
+}
+
+function closeModal() {
+  modal.classList.add("hidden");
+}
+
+// 玩家選擇加入
+btnAdd.addEventListener("click", () => {
+  if (!pendingSegment) return;
+
+  addIngredient(pendingSegment);
+  addHistory(pendingSegment);
+
+  currentResult.innerHTML = `加入：${pendingSegment.icon} ${pendingSegment.label}`;
+
+  pendingSegment = null;
+  closeModal();
+});
+
+// 玩家選擇略過
+btnSkip.addEventListener("click", () => {
+  currentResult.innerHTML = `略過：${pendingSegment.icon} ${pendingSegment.label}`;
+  pendingSegment = null;
+  closeModal();
+});
+
+// ===============================
+// 加入漢堡
+// ===============================
+function addIngredient(seg) {
+  burger.push(seg);
+
+  const el = document.createElement("div");
+  el.className = "burger-layer ingredient-new";
+  el.textContent = `${seg.icon} ${seg.label}`;
+
+  burgerLayers.appendChild(el);
+
+  burgerStatus.textContent = `目前共有 ${burger.length} 層食材。`;
+}
+
+// 歷史紀錄
+function addHistory(seg) {
+  const item = document.createElement("div");
+  item.className = "history-item";
+  item.textContent = `${seg.icon} ${seg.label}（${new Date().toLocaleTimeString()}）`;
+  historyList.prepend(item);
+}
+
+// ===============================
+// 重置整局
+// ===============================
+resetButton.addEventListener("click", resetGame);
+
+function resetGame() {
+  remainingSpins = MAX_SPINS;
+  updateRemaining();
+
+  burger = [];
+  burgerLayers.innerHTML = "";
+  historyList.innerHTML = "";
+  currentResult.textContent = "尚未開始。";
+  burgerStatus.textContent = "尚未加入任何食材。";
+
+  wheel.style.transform = "rotate(0deg)";
+}
