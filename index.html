@@ -1,234 +1,254 @@
-// ===============================
-// 🔧 遊戲設定
-// ===============================
-const MAX_SPINS = 8;        // 每局最多轉幾次
-const SPIN_DURATION_MS = 3000;
+## 瘋狂漢堡轉盤（多人模式 + 排行榜）完整專案
 
-// 食材設定（可自由擴充）
-const SEGMENTS = [
-  { label: "牛肉排", icon: "🥩", type: "meat", weight: 3 },
-  { label: "雞肉排", icon: "🍗", type: "meat", weight: 3 },
-  { label: "豬肉排", icon: "🍖", type: "meat", weight: 2 },
-  { label: "素肉排", icon: "🫘", type: "veggie", weight: 1 },
-  { label: "起司", icon: "🧀", type: "cheese", weight: 4 },
-  { label: "雙倍起司", icon: "🧀", type: "cheese", weight: 2 },
-  { label: "生菜", icon: "🥬", type: "veggie", weight: 4 },
-  { label: "番茄", icon: "🍅", type: "veggie", weight: 4 },
-  { label: "酸黃瓜", icon: "🥒", type: "veggie", weight: 3 },
-  { label: "培根", icon: "🥓", type: "meat", weight: 2 },
-  { label: "醬汁", icon: "🥫", type: "sauce", weight: 3 },
-  { label: "超大漢堡", icon: "🍔", type: "special", weight: 1 }
-];
+以下包含 3 個檔案：`index.html`、`styles.css`、`script.js`
 
-// ===============================
-// DOM
-// ===============================
-const wheel = document.getElementById("wheel");
-const wheelLabels = document.getElementById("wheelLabels");
-const spinButton = document.getElementById("spinButton");
-const resetButton = document.getElementById("resetBurgerButton");
+---
 
-const remainingText = document.getElementById("remainingSpinsText");
-const currentResult = document.getElementById("currentResult");
-const historyList = document.getElementById("historyList");
-const burgerLayers = document.getElementById("burgerLayers");
-const burgerStatus = document.getElementById("burgerStatus");
+# index.html
 
-// ✨ 選擇彈窗
-const modal = document.getElementById("choiceModal");
-const modalTitle = document.getElementById("modalTitle");
-const modalDesc = document.getElementById("modalDescription");
-const btnAdd = document.getElementById("btnAdd");
-const btnSkip = document.getElementById("btnSkip");
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>瘋狂漢堡轉轉樂 - 多人對戰版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
 
-// ===============================
-// 狀態
-// ===============================
-let currentRotation = 0;
-let isSpinning = false;
+    <!-- 玩家輸入彈窗 -->
+    <div id="playerModal" class="modal">
+      <div class="modal-content">
+        <h3>輸入玩家名稱</h3>
+        <p>使用逗號分隔，例如：小明, 小美, 多多老大</p>
+        <input id="playerInput" class="modal-input" placeholder="輸入玩家名稱" />
+        <button id="startGameBtn" class="btn modal-add">開始遊戲</button>
+      </div>
+    </div>
+
+    <header class="header">
+      <h1 class="game-title glow-title">瘋狂漢堡轉轉樂 - 多人對戰</h1>
+      <p class="game-subtitle">輪流轉盤、組建專屬漢堡，最後比誰最強！</p>
+    </header>
+
+    <h2 id="turnText" class="turn-text">等待開始...</h2>
+
+    <main class="main">
+
+      <!-- 轉盤區 -->
+      <section class="wheel-section">
+        <div class="wheel-wrapper">
+          <div class="pointer"></div>
+          <div id="wheel" class="wheel">
+            <div class="wheel-center">
+              <div class="center-emoji">🍔</div>
+              <div class="center-text">指針上方<br>為結果</div>
+            </div>
+            <div id="wheelLabels" class="wheel-labels"></div>
+          </div>
+        </div>
+
+        <div class="wheel-controls">
+          <button id="spinButton" class="btn btn-spin">開始轉！</button>
+        </div>
+
+        <p class="spin-info">
+          剩餘轉動次數：<span id="remainingSpinsText">8</span>
+        </p>
+      </section>
+
+      <!-- 結果區 + 漢堡區 -->
+      <section class="result-section">
+
+        <div class="result-panel">
+          <h2>抽中結果</h2>
+          <div id="currentResult" class="current-result">尚未開始。</div>
+
+          <h3>歷史紀錄</h3>
+          <div id="historyList" class="history-list"></div>
+        </div>
+
+        <div class="burger-panel">
+          <h2>玩家漢堡</h2>
+
+          <div class="burger-visual">
+            <div class="burger-layer bun-top">🍞 麵包上層</div>
+            <div id="burgerLayers" class="burger-layers"></div>
+            <div class="burger-layer bun-bottom">🍞 麵包下層</div>
+            <div class="finish-effect" id="finishEffect"></div>
+          </div>
+
+          <div id="burgerStatus" class="burger-status">尚未加入任何食材。</div>
+        </div>
+
+      </section>
+
+      <!-- 排行榜 -->
+      <section id="rankSection" class="rank-section hidden">
+        <h2>🏆 最終排行榜</h2>
+        <div id="rankList" class="rank-list"></div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- 食材選擇彈窗 -->
+  <div id="choiceModal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <p id="modalDescription"></p>
+      <div class="modal-actions">
+        <button id="btnAdd" class="btn modal-add">加入漢堡</button>
+        <button id="btnSkip" class="btn modal-skip">跳過</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+```
+
+---
+
+# styles.css
+
+```css
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #ffdd9c 0%, #f7971e 40%, #5d4037 100%);
+  color: #fffde8;
+  font-family: "Microsoft JhengHei", sans-serif;
+}
+.page { padding: 16px; }
+.header { text-align: center; margin-bottom: 10px; }
+.game-title { font-size: 30px; font-weight: 900; }
+.turn-text { text-align:center; font-size:20px; margin-bottom:10px; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal.hidden { display: none; }
+.modal-content {
+  background: #fff4da;
+  padding: 20px;
+  border-radius: 16px;
+  width: 80%; max-width: 300px;
+  text-align: center;
+  color: #6d3600;
+}
+.modal-input {
+  width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: none;
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 800;
+  border: none;
+  margin: 6px;
+}
+.btn-spin { background: linear-gradient(135deg,#ffdd6a,#ff8a00); }
+.btn-reset { background: #5d4037; color:#ffeec0; }
+.modal-add { background: #ffb300; }
+.modal-skip { background:#795548; color:#ffeccf; }
+
+.wheel-section {
+  background: rgba(0,0,0,0.4);
+  padding:16px; border-radius:18px; text-align:center;
+  margin-bottom:20px;
+}
+.pointer {
+  position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+  width:0; border-left:20px solid transparent; border-right:20px solid transparent;
+  border-bottom:28px solid #ffe900; z-index:10;
+}
+.wheel {
+  width:300px; height:300px; margin:auto;
+  border-radius:50%; border:10px solid #ffebc0;
+  overflow:hidden; background:#3b2417;
+  position:relative;
+  transition: transform 3s cubic-bezier(.19,1,.22,1);
+}
+.wheel-center {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:100px; height:100px; border-radius:50%; background:#ffcb59;
+  border:4px solid #fff5dc; text-align:center; padding-top:10px;
+}
+
+.segment-label {
+  position:absolute; left:50%; top:50%; width:40px; text-align:center;
+  font-size:24px; transform-origin:center;
+}
+.segment-label.active { transform:scale(1.4); filter:brightness(1.5); }
+
+.result-section {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+}
+.result-panel, .burger-panel {
+  background:rgba(0,0,0,0.4); padding:12px; border-radius:16px;
+}
+.burger-visual {
+  background:rgba(0,0,0,0.3); padding:10px; min-height:240px;
+  border-radius:16px; display:flex; flex-direction:column; justify-content:flex-end;
+  position:relative;
+}
+.burger-layer { background:#ffe0b9; padding:6px; border-radius:999px; text-align:center; margin:4px 0; }
+
+/* 排行榜 */
+.rank-section {
+  background:rgba(0,0,0,0.45);
+  padding:16px; border-radius:16px; margin-top:20px;
+}
+.rank-section.hidden { display:none; }
+.rank-list { padding:6px; }
+```
+
+---
+
+# script.js
+
+```javascript
+// ========================== 玩家資料 ===========================
+let players = [];
+let currentPlayerIndex = 0;
+let burgers = {}; // 每位玩家的漢堡
+
+const MAX_SPINS = 8;
 let remainingSpins = MAX_SPINS;
-let burger = [];
-let pendingSegment = null;
-let lastActiveIndex = null;
 
-// ===============================
-// 初始化
-// ===============================
-initWheel();
-updateRemaining();
+// 分數系統（平衡版）
+const SCORE_TABLE = {
+  meat: 40,
+  cheese: 30,
+  veggie: 15,
+  sauce: 20,
+  special: 60
+};
 
-// ===============================
-// 建立轉盤背景（色塊）
-// ===============================
-function initWheel() {
-  const total = SEGMENTS.length;
-  const step = 360 / total;
+const BONUS = {
+  "牛肉排": 5,
+  "雙倍起司": 8,
+  "培根": 10,
+  "超大漢堡": 20
+};
 
-  // 背景色塊
-  wheel.style.background = `conic-gradient(
-    ${SEGMENTS.map((s, i) => {
-      const a1 = i * step;
-      const a2 = (i + 1) * step;
-      const color = getColorByType(s.type);
-      return `${color} ${a1}deg ${a2}deg`;
-    }).join(",")}
-  )`;
+// 食材設定
+const SEGMENTS = [
+  { label:"牛肉排", icon:"🥩", type:"meat", weight:3 },
+  { label:"雞肉排", icon:"🍗", type:"meat", weight:3 },
+  { label:"豬肉排", icon:"🍖", type:"meat", weight:2 },
+  { label:"素肉排", icon:"🫘", type:"veggie", weight:1 },
+  { label:"起司", icon:"🧀", type:"cheese", weight:4 },
+  { label:"雙倍起司", icon:"🧀", type:
 
-  // icon 在圓周上
-  wheelLabels.innerHTML = "";
-  SEGMENTS.forEach((s, i) => {
-    const angle = i * step + step / 2;
-    const el = document.createElement("div");
-    el.className = "segment-label";
-    el.dataset.index = i;
-    el.innerHTML = `<span>${s.icon}</span>`;
-    el.style.transform = `rotate(${angle}deg) translate(0, -78%) rotate(${-angle}deg)`;
-    wheelLabels.appendChild(el);
-  });
-}
-
-// 顏色對應
-function getColorByType(type) {
-  switch (type) {
-    case "meat": return "#ffb74d";
-    case "veggie": return "#a5d6a7";
-    case "cheese": return "#ffe082";
-    case "sauce": return "#ffab91";
-    case "special": return "#ce93d8";
-    default: return "#ffe0b2";
-  }
-}
-
-// ===============================
-// 抽獎 → 權重隨機
-// ===============================
-function getRandomIndex() {
-  const total = SEGMENTS.reduce((sum, s) => sum + s.weight, 0);
-  let r = Math.random() * total;
-
-  for (let i = 0; i < SEGMENTS.length; i++) {
-    r -= SEGMENTS[i].weight;
-    if (r <= 0) return i;
-  }
-  return SEGMENTS.length - 1;
-}
-
-// ===============================
-// 開始轉盤
-// ===============================
-spinButton.addEventListener("click", () => {
-  if (isSpinning) return;
-  if (remainingSpins <= 0) return;
-
-  isSpinning = true;
-  spinButton.disabled = true;
-
-  const index = getRandomIndex();
-  const step = 360 / SEGMENTS.length;
-
-  const fullSpins = 3 + Math.floor(Math.random() * 3);
-  const target = fullSpins * 360 - (index * step + step / 2);
-
-  currentRotation = target;
-  wheel.style.transform = `rotate(${target}deg)`;
-
-  // 清除前一個高亮
-  if (lastActiveIndex !== null) {
-    wheelLabels.querySelector(`[data-index="${lastActiveIndex}"]`)?.classList.remove("active");
-  }
-
-  setTimeout(() => {
-    isSpinning = false;
-    spinButton.disabled = false;
-    remainingSpins--;
-    updateRemaining();
-
-    pendingSegment = SEGMENTS[index];
-    lastActiveIndex = index;
-
-    showChoiceModal(pendingSegment);
-  }, SPIN_DURATION_MS);
-});
-
-function updateRemaining() {
-  remainingText.textContent = remainingSpins;
-}
-
-// ===============================
-// ✨ 彈窗邏輯：加入 or 隱藏
-// ===============================
-function showChoiceModal(seg) {
-  modalTitle.textContent = `抽到：${seg.label}`;
-  modalDesc.innerHTML = `<div style="font-size:32px;">${seg.icon}</div>是否加入漢堡？`;
-
-  modal.classList.remove("hidden");
-
-  // 高亮
-  wheelLabels.querySelector(`[data-index="${lastActiveIndex}"]`).classList.add("active");
-}
-
-function closeModal() {
-  modal.classList.add("hidden");
-}
-
-// 玩家選擇加入
-btnAdd.addEventListener("click", () => {
-  if (!pendingSegment) return;
-
-  addIngredient(pendingSegment);
-  addHistory(pendingSegment);
-
-  currentResult.innerHTML = `加入：${pendingSegment.icon} ${pendingSegment.label}`;
-
-  pendingSegment = null;
-  closeModal();
-});
-
-// 玩家選擇略過
-btnSkip.addEventListener("click", () => {
-  currentResult.innerHTML = `略過：${pendingSegment.icon} ${pendingSegment.label}`;
-  pendingSegment = null;
-  closeModal();
-});
-
-// ===============================
-// 加入漢堡
-// ===============================
-function addIngredient(seg) {
-  burger.push(seg);
-
-  const el = document.createElement("div");
-  el.className = "burger-layer ingredient-new";
-  el.textContent = `${seg.icon} ${seg.label}`;
-
-  burgerLayers.appendChild(el);
-
-  burgerStatus.textContent = `目前共有 ${burger.length} 層食材。`;
-}
-
-// 歷史紀錄
-function addHistory(seg) {
-  const item = document.createElement("div");
-  item.className = "history-item";
-  item.textContent = `${seg.icon} ${seg.label}（${new Date().toLocaleTimeString()}）`;
-  historyList.prepend(item);
-}
-
-// ===============================
-// 重置整局
-// ===============================
-resetButton.addEventListener("click", resetGame);
-
-function resetGame() {
-  remainingSpins = MAX_SPINS;
-  updateRemaining();
-
-  burger = [];
-  burgerLayers.innerHTML = "";
-  historyList.innerHTML = "";
-  currentResult.textContent = "尚未開始。";
-  burgerStatus.textContent = "尚未加入任何食材。";
-
-  wheel.style.transform = "rotate(0deg)";
-}
-
+```
