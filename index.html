@@ -2,17 +2,12 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>漢堡對戰遊戲 🍔</title>
+  <title>漢堡對決 🍔（含分數）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, sans-serif;
       background: radial-gradient(circle at top, #ffe9b8, #f5d0c5 40%, #f2f2f2 80%);
       min-height: 100vh;
       display: flex;
@@ -21,484 +16,217 @@
       padding: 16px;
       color: #222;
     }
+    h1 { font-size: 2rem; margin-bottom: 4px; }
+    .subtitle { font-size: 0.9rem; opacity: 0.8; margin-bottom: 16px; }
 
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 4px;
-      text-align: center;
-    }
+    /* --- 版面樣式同前略 --- */
 
-    .subtitle {
-      font-size: 0.9rem;
-      opacity: 0.8;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .game-wrapper {
-      max-width: 1100px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
+    .game-wrapper { max-width: 1100px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
     .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 10px 14px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      flex-wrap: wrap; background: rgba(255,255,255,0.8);
+      padding: 10px 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
+    .current-player { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .player-pill { padding: 4px 10px; border-radius: 999px; border: 1px solid #222; background: #ffe066; min-width: 80px; text-align: center; }
 
-    .current-player {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-    }
-
-    .player-pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid #222;
-      background: #ffe066;
-      min-width: 80px;
-      text-align: center;
-    }
-
-    .hint {
-      font-size: 0.85rem;
-      opacity: 0.85;
-    }
-
-    .buttons-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    button {
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-    }
+    .buttons-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .ingredient-btn {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.9);
-      border: 1px solid rgba(0,0,0,0.05);
-      font-size: 0.85rem;
+      padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: flex;
+      align-items: center; gap: 4px; cursor: pointer;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
-      white-space: nowrap;
     }
 
-    .ingredient-btn span.emoji {
-      font-size: 1.1rem;
-    }
-
-    .ingredient-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-      background: #fff;
-    }
-
-    .ingredient-btn:active {
-      transform: translateY(0px) scale(0.97);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.09);
-    }
-
-    .main-area {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    @media (max-width: 768px) {
-      .main-area {
-        grid-template-columns: 1fr;
-      }
-    }
+    .main-area { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+    @media(max-width:768px){ .main-area{ grid-template-columns:1fr; } }
 
     .player-panel {
-      background: rgba(255,255,255,0.9);
-      border-radius: 16px;
-      padding: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      overflow: hidden;
+      background: rgba(255,255,255,0.9); border-radius:16px; padding:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; flex-direction:column; gap:8px; position:relative;
     }
+    .player-panel.active { box-shadow:0 0 0 2px #ff922b, 0 6px 14px rgba(0,0,0,0.18); }
 
-    .player-panel.active {
-      box-shadow: 0 0 0 2px #ff922b, 0 6px 14px rgba(0,0,0,0.18);
-    }
+    .player-header { display:flex; justify-content:space-between; align-items:center; gap: 8px; }
+    .stack-info { font-size:0.8rem; opacity:0.8; }
 
-    .player-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
+    .score-info { font-size:0.9rem; font-weight:700; color:#b34300; }
 
-    .player-name {
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .burger-area { display:flex; align-items:flex-end; justify-content:center; padding:8px; perspective:800px; }
+    .burger { display:flex; flex-direction:column; align-items:center; gap:3px; transform-origin:center bottom; transition:0.4s; }
+    .burger.rotate { transform: rotateY(360deg); }
 
-    .player-name span.emoji {
-      font-size: 1.3rem;
-    }
+    .bun { width:120px; height:28px; border-radius:50% 50% 40% 40%; background:linear-gradient(180deg,#ffdf91,#f4a259); display:flex; align-items:center; justify-content:center; }
+    .bun.bottom { border-radius:40% 40% 50% 50%; height:24px; background:linear-gradient(180deg,#f4a259,#d07e35); }
 
-    .stack-info {
-      font-size: 0.8rem;
-      opacity: 0.8;
-    }
-
-    .reset-btn {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #ffe8cc;
-      border: 1px solid #ffc078;
-    }
-
-    .reset-btn:hover {
-      background: #ffd8a8;
-    }
-
-    .burger-area {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 8px;
-      position: relative;
-      perspective: 800px;
-    }
-
-    .burger {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      transform-origin: center bottom;
-      transition: transform 0.4s ease;
-    }
-
-    .burger.rotate {
-      transform: rotateY(360deg);
-    }
-
-    .bun {
-      width: 120px;
-      height: 28px;
-      border-radius: 50% 50% 40% 40%;
-      background: linear-gradient(180deg, #ffdf91, #f4a259);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-    }
-
-    .bun.bottom {
-      border-radius: 40% 40% 50% 50%;
-      height: 24px;
-      background: linear-gradient(180deg, #f4a259, #d07e35);
-      box-shadow: 0 0 0 rgba(0,0,0,0.2);
-    }
-
-    .layer {
-      width: 110px;
-      border-radius: 20px;
-      padding: 4px 8px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-      transform-origin: center;
-      animation: drop-in 0.18s ease-out;
-    }
-
-    .layer span.layer-emoji {
-      font-size: 1.2rem;
-      margin-right: 4px;
-    }
-
-    .layer span.layer-name {
-      flex: 1;
-    }
-
-    .layer span.layer-tag {
-      font-size: 0.7rem;
-      opacity: 0.7;
-    }
-
-    @keyframes drop-in {
-      from {
-        transform: translateY(-12px) scale(0.96);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-    }
-
-    .footer-note {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      margin-top: 6px;
-      text-align: center;
-    }
-
-    .flash {
-      animation: flash 0.3s ease-out;
-    }
-
-    @keyframes flash {
-      from { box-shadow: 0 0 0 0 rgba(255,146,43,0.7); }
-      to   { box-shadow: 0 0 0 12px rgba(255,146,43,0); }
-    }
+    .layer { width:110px; border-radius:20px; padding:4px 8px; background:#fff; display:flex; justify-content:space-between; }
   </style>
 </head>
+
 <body>
   <h1>漢堡對決 🍔</h1>
-  <div class="subtitle">
-    點擊食材堆出你的神級漢堡，按 <b>SPACE</b> 旋轉＆換人！
-  </div>
+  <div class="subtitle">點食材堆漢堡，按 SPACE 換人＋旋轉，分數即時加總！</div>
 
   <div class="game-wrapper">
     <div class="top-bar">
       <div class="current-player">
-        目前玩家：
-        <div id="currentPlayerPill" class="player-pill">玩家 1</div>
+        目前玩家：<div id="currentPlayerPill" class="player-pill">玩家 1</div>
       </div>
-      <div class="hint">
-        🖱 點食材 = 幫目前玩家加料  
-        ⌨️ <b>SPACE</b> = 換玩家 + 兩個漢堡旋轉
-      </div>
-      <div class="buttons-row" id="controlsRow">
-        <button id="switchBtn" class="reset-btn">切換玩家 (SPACE)</button>
-      </div>
+      <button id="switchBtn" class="ingredient-btn">切換玩家 (SPACE)</button>
     </div>
 
     <div class="buttons-row" id="ingredientButtons"></div>
 
     <div class="main-area">
+      <!-- 玩家1 -->
       <div id="player1Panel" class="player-panel active">
         <div class="player-header">
-          <div class="player-name">
-            <span class="emoji">🧑‍🍳</span> 玩家 1
-          </div>
-          <div class="stack-info">
-            層數：<span id="p1Count">0</span>
-          </div>
-          <button class="reset-btn" data-player="1">清空</button>
+          <div>🧑‍🍳 玩家 1</div>
+          <div class="stack-info">層數：<span id="p1Count">0</span></div>
+          <div class="score-info">分數：<span id="p1Score">0</span></div>
+          <button class="ingredient-btn" data-player="1">清空</button>
         </div>
-        <div class="burger-area">
-          <div class="burger" id="burger1">
-            <!-- bottom bun + layers + top bun 會由 JS 填 -->
-          </div>
-        </div>
+        <div class="burger-area"><div class="burger" id="burger1"></div></div>
       </div>
 
+      <!-- 玩家2 -->
       <div id="player2Panel" class="player-panel">
         <div class="player-header">
-          <div class="player-name">
-            <span class="emoji">👩‍🍳</span> 玩家 2
-          </div>
-          <div class="stack-info">
-            層數：<span id="p2Count">0</span>
-          </div>
-          <button class="reset-btn" data-player="2">清空</button>
+          <div>👩‍🍳 玩家 2</div>
+          <div class="stack-info">層數：<span id="p2Count">0</span></div>
+          <div class="score-info">分數：<span id="p2Score">0</span></div>
+          <button class="ingredient-btn" data-player="2">清空</button>
         </div>
-        <div class="burger-area">
-          <div class="burger" id="burger2">
-            <!-- bottom bun + layers + top bun 會由 JS 填 -->
-          </div>
-        </div>
+        <div class="burger-area"><div class="burger" id="burger2"></div></div>
       </div>
-    </div>
-
-    <div class="footer-note">
-      小提示：可以約好規則，例如「必須至少 5 層」、「要放鳳梨才算完成」，自由發揮。
     </div>
   </div>
 
-  <script>
-    const ingredients = [
-      { id: "bun",      name: "漢堡",   emoji: "🍔", tag: "BUN" },
-      { id: "beef",     name: "牛肉",   emoji: "🐮", tag: "肉" },
-      { id: "pork",     name: "豬肉",   emoji: "🐷", tag: "肉" },
-      { id: "chickenL", name: "雞腿排", emoji: "🍗", tag: "肉" },
-      { id: "chickenB", name: "雞胸排", emoji: "🐔", tag: "肉" },
-      { id: "fish",     name: "魚排",   emoji: "🐟", tag: "海鮮" },
-      { id: "shrimp",   name: "蝦排",   emoji: "🦐", tag: "海鮮" },
-      { id: "duck",     name: "鴨肉",   emoji: "🦆", tag: "肉" },
-      { id: "bacon",    name: "培根",   emoji: "🥓", tag: "肉" },
-      { id: "cheese",   name: "起司",   emoji: "🧀", tag: "起司" },
-      { id: "lettuce",  name: "生菜",   emoji: "🥬", tag: "蔬菜" },
-      { id: "tomato",   name: "蕃茄",   emoji: "🍅", tag: "蔬菜" },
-      { id: "onion",    name: "洋蔥",   emoji: "🧅", tag: "蔬菜" },
-      { id: "pickle",   name: "小黃瓜", emoji: "🥒", tag: "蔬菜" },
-      { id: "corn",     name: "玉米",   emoji: "🌽", tag: "蔬菜" },
-      { id: "mushroom", name: "香菇",   emoji: "🍄", tag: "蔬菜" },
-      { id: "pineapple",name: "鳳梨",   emoji: "🍍", tag: "鳳梨" },
-      { id: "egg",      name: "蛋",     emoji: "🍳", tag: "蛋" },
-      { id: "mayo",     name: "美乃滋", emoji: "🤍", tag: "醬" },
-      { id: "chili",    name: "辣椒醬", emoji: "🌶️", tag: "醬" },
-      { id: "bbq",      name: "BBQ 醬", emoji: "🍖", tag: "醬" },
-      { id: "peanut",   name: "花生醬", emoji: "🥜", tag: "醬" },
-    ];
+<script>
+const ingredients = [
+  { id:"bun",  name:"漢堡", emoji:"🍔", score:60 },
+  { id:"beef", name:"牛肉", emoji:"🐮", score:45 },
+  { id:"pork", name:"豬肉", emoji:"🐷", score:35 },
+  { id:"chickenL", name:"雞腿排", emoji:"🍗", score:40 },
+  { id:"chickenB", name:"雞胸排", emoji:"🐔", score:30 },
+  { id:"fish", name:"魚排", emoji:"🐟", score:35 },
+  { id:"shrimp", name:"蝦排", emoji:"🦐", score:40 },
+  { id:"duck", name:"鴨肉", emoji:"🦆", score:45 },
+  { id:"bacon", name:"培根", emoji:"🥓", score:20 },
+  { id:"cheese", name:"起司", emoji:"🧀", score:20 },
+  { id:"lettuce", name:"生菜", emoji:"🥬", score:5 },
+  { id:"tomato", name:"蕃茄", emoji:"🍅", score:5 },
+  { id:"onion", name:"洋蔥", emoji:"🧅", score:3 },
+  { id:"pickle", name:"小黃瓜", emoji:"🥒", score:5 },
+  { id:"corn", name:"玉米", emoji:"🌽", score:5 },
+  { id:"mushroom", name:"香菇", emoji:"🍄", score:10 },
+  { id:"pineapple", name:"鳳梨", emoji:"🍍", score:8 },
+  { id:"egg", name:"蛋", emoji:"🍳", score:12 },
+  { id:"mayo", name:"美乃滋", emoji:"🤍", score:3 },
+  { id:"chili", name:"辣椒醬", emoji:"🌶️", score:3 },
+  { id:"bbq", name:"BBQ 醬", emoji:"🍖", score:6 },
+  { id:"peanut", name:"花生醬", emoji:"🥜", score:8 },
+];
 
-    let currentPlayer = 1;
-    const stacks = {
-      1: [],
-      2: []
-    };
+let currentPlayer = 1;
 
-    const ingredientButtonsContainer = document.getElementById("ingredientButtons");
-    const burger1El = document.getElementById("burger1");
-    const burger2El = document.getElementById("burger2");
-    const p1CountEl = document.getElementById("p1Count");
-    const p2CountEl = document.getElementById("p2Count");
-    const currentPlayerPill = document.getElementById("currentPlayerPill");
-    const player1Panel = document.getElementById("player1Panel");
-    const player2Panel = document.getElementById("player2Panel");
-    const switchBtn = document.getElementById("switchBtn");
+const stacks = { 1: [], 2: [] };
+const scores = { 1: 0, 2: 0 };
 
-    function renderIngredientButtons() {
-      ingredientButtonsContainer.innerHTML = "";
-      ingredients.forEach(item => {
-        const btn = document.createElement("button");
-        btn.className = "ingredient-btn";
-        btn.innerHTML = `
-          <span class="emoji">${item.emoji}</span>
-          <span>${item.name}</span>
-        `;
-        btn.addEventListener("click", () => {
-          addIngredientToCurrentPlayer(item);
-        });
-        ingredientButtonsContainer.appendChild(btn);
-      });
-    }
+const ingredientButtonsContainer = document.getElementById("ingredientButtons");
+const burger1El = document.getElementById("burger1");
+const burger2El = document.getElementById("burger2");
+const p1CountEl = document.getElementById("p1Count");
+const p2CountEl = document.getElementById("p2Count");
+const p1ScoreEl = document.getElementById("p1Score");
+const p2ScoreEl = document.getElementById("p2Score");
+const currentPlayerPill = document.getElementById("currentPlayerPill");
+const switchBtn = document.getElementById("switchBtn");
 
-    function addIngredientToCurrentPlayer(item) {
-      stacks[currentPlayer].push(item);
-      renderStacks();
-      flashActivePlayer();
-    }
+function renderIngredientButtons() {
+  ingredientButtonsContainer.innerHTML = "";
+  ingredients.forEach(item => {
+    const btn = document.createElement("button");
+    btn.className = "ingredient-btn";
+    btn.innerHTML = `${item.emoji} ${item.name} +${item.score}`;
+    btn.addEventListener("click", () => addIngredient(item));
+    ingredientButtonsContainer.appendChild(btn);
+  });
+}
 
-    function renderBurgerStack(container, stack) {
-      container.innerHTML = "";
+function addIngredient(item) {
+  stacks[currentPlayer].push(item);
+  scores[currentPlayer] += item.score;
+  renderStacks();
+}
 
-      const bottomBun = document.createElement("div");
-      bottomBun.className = "bun bottom";
-      bottomBun.textContent = "🍔";
-      container.appendChild(bottomBun);
+function renderBurgerStack(container, stack) {
+  container.innerHTML = "";
 
-      stack.forEach(layerItem => {
-        const layer = document.createElement("div");
-        layer.className = "layer";
-        layer.innerHTML = `
-          <span class="layer-emoji">${layerItem.emoji}</span>
-          <span class="layer-name">${layerItem.name}</span>
-          <span class="layer-tag">${layerItem.tag}</span>
-        `;
-        container.insertBefore(layer, bottomBun.nextSibling);
-      });
+  const bottom = document.createElement("div");
+  bottom.className = "bun bottom";
+  bottom.textContent = "🍔";
+  container.appendChild(bottom);
 
-      const topBun = document.createElement("div");
-      topBun.className = "bun";
-      topBun.textContent = "🍔";
-      container.appendChild(topBun);
-    }
+  stack.forEach(l => {
+    const layer = document.createElement("div");
+    layer.className = "layer";
+    layer.innerHTML = `${l.emoji} ${l.name} (+${l.score})`;
+    container.appendChild(layer);
+  });
 
-    function renderStacks() {
-      renderBurgerStack(burger1El, stacks[1]);
-      renderBurgerStack(burger2El, stacks[2]);
+  const top = document.createElement("div");
+  top.className = "bun";
+  top.textContent = "🍔";
+  container.appendChild(top);
+}
 
-      p1CountEl.textContent = stacks[1].length;
-      p2CountEl.textContent = stacks[2].length;
-    }
+function renderStacks() {
+  renderBurgerStack(burger1El, stacks[1]);
+  renderBurgerStack(burger2El, stacks[2]);
 
-    function setCurrentPlayer(player) {
-      currentPlayer = player;
-      currentPlayerPill.textContent = `玩家 ${player}`;
-      currentPlayerPill.classList.remove("flash");
-      void currentPlayerPill.offsetWidth;
-      currentPlayerPill.classList.add("flash");
+  p1CountEl.textContent = stacks[1].length;
+  p2CountEl.textContent = stacks[2].length;
 
-      if (player === 1) {
-        player1Panel.classList.add("active");
-        player2Panel.classList.remove("active");
-      } else {
-        player2Panel.classList.add("active");
-        player1Panel.classList.remove("active");
-      }
-    }
+  p1ScoreEl.textContent = scores[1];
+  p2ScoreEl.textContent = scores[2];
+}
 
-    function switchPlayerAndRotate() {
-      setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-      rotateBurgers();
-    }
+function switchPlayer() {
+  currentPlayer = currentPlayer === 1 ? 2 : 1;
+  currentPlayerPill.textContent = `玩家 ${currentPlayer}`;
+  rotateBurgers();
+}
 
-    function rotateBurgers() {
-      [burger1El, burger2El].forEach(el => {
-        el.classList.remove("rotate");
-        void el.offsetWidth;
-        el.classList.add("rotate");
-      });
-    }
+function rotateBurgers() {
+  [burger1El, burger2El].forEach(el => {
+    el.classList.remove("rotate");
+    void el.offsetWidth;
+    el.classList.add("rotate");
+  });
+}
 
-    function flashActivePlayer() {
-      const panel = currentPlayer === 1 ? player1Panel : player2Panel;
-      panel.classList.remove("flash");
-      void panel.offsetWidth;
-      panel.classList.add("flash");
-    }
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    switchPlayer();
+  }
+});
 
-    function resetPlayerStack(player) {
-      stacks[player] = [];
-      renderStacks();
-    }
+switchBtn.addEventListener("click", switchPlayer);
 
-    switchBtn.addEventListener("click", switchPlayerAndRotate);
-
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        switchPlayerAndRotate();
-      }
-    });
-
-    document.querySelectorAll(".reset-btn[data-player]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const p = Number(btn.getAttribute("data-player"));
-        resetPlayerStack(p);
-      });
-    });
-
-    renderIngredientButtons();
+document.querySelectorAll("[data-player]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const p = Number(btn.getAttribute("data-player"));
+    stacks[p] = [];
+    scores[p] = 0;
     renderStacks();
-    setCurrentPlayer(1);
-  </script>
+  });
+});
+
+renderIngredientButtons();
+renderStacks();
+</script>
 </body>
 </html>
