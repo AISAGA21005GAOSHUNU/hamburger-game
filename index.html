@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>漢堡對決 🍔（含音效＋分數）</title>
+  <title>漢堡對決 🍔（完成動畫＋音效＋分數）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +32,7 @@
 
     .ingredient-btn {
       padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.9);
-      border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: flex;
+      border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: inline-flex;
       align-items: center; gap: 4px; cursor: pointer;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
       transition: 0.1s;
@@ -48,7 +48,7 @@
     }
     .player-panel.active { box-shadow:0 0 0 2px #ff922b, 0 6px 14px rgba(0,0,0,0.18); }
 
-    .player-header { display:flex; justify-content:space-between; align-items:center; gap: 8px; }
+    .player-header { display:flex; justify-content:space-between; align-items:center; gap: 8px; flex-wrap: wrap; }
     .stack-info { font-size:0.8rem; opacity:0.8; }
     .score-info { font-size:0.9rem; font-weight:700; color:#b34300; }
 
@@ -60,19 +60,126 @@
     .bun.bottom { border-radius:40% 40% 50% 50%; height:24px; background:linear-gradient(180deg,#f4a259,#d07e35); }
 
     .layer { width:110px; border-radius:20px; padding:4px 8px; background:#fff; display:flex; justify-content:space-between; }
+
+    /* ===== 完成畫面 Overlay ===== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 20;
+    }
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overlay-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+    }
+    .overlay-content {
+      position: relative;
+      background: #fffaf0;
+      border-radius: 24px;
+      padding: 20px 24px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      max-width: 360px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      animation: pop-in 0.35s ease-out;
+    }
+    @keyframes pop-in {
+      from { transform: scale(0.7) translateY(20px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .overlay-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .overlay-score {
+      font-size: 0.95rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .burger-large {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:5px;
+      transform-origin:center bottom;
+      animation: float-burger 2s ease-in-out infinite alternate;
+    }
+    @keyframes float-burger {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-8px) scale(1.03); }
+    }
+
+    .bun-large {
+      width: 200px;
+      height: 50px;
+      border-radius: 50% 50% 40% 40%;
+      background: linear-gradient(180deg,#ffdf91,#f4a259);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:2.1rem;
+      box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    }
+    .bun-large.bottom {
+      border-radius:40% 40% 50% 50%;
+      height:40px;
+      background:linear-gradient(180deg,#f4a259,#d07e35);
+      box-shadow:0 0 0 rgba(0,0,0,0.2);
+    }
+    .layer-large {
+      width:180px;
+      border-radius:24px;
+      padding:6px 12px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:1rem;
+      box-shadow:0 3px 8px rgba(0,0,0,0.18);
+    }
+
+    .overlay-close-btn {
+      margin-top: 4px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #ffcc80;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .overlay-close-btn:hover { background:#ffb74d; }
   </style>
 </head>
 
 <body>
   <h1>漢堡對決 🍔</h1>
-  <div class="subtitle">點食材堆漢堡，每一下都有嗶一聲，還能雙人對戰算分！</div>
+  <div class="subtitle">點食材堆漢堡，SPACE 切換玩家，完成鍵看放大版神作！</div>
 
   <div class="game-wrapper">
     <div class="top-bar">
       <div class="current-player">
         目前玩家：<div id="currentPlayerPill" class="player-pill">玩家 1</div>
       </div>
-      <button id="switchBtn" class="ingredient-btn">切換玩家 (SPACE)</button>
+      <div class="buttons-row">
+        <button id="switchBtn" class="ingredient-btn">切換玩家 (SPACE)</button>
+        <button id="finishBtn" class="ingredient-btn">完成漢堡 ✅</button>
+      </div>
     </div>
 
     <div class="buttons-row" id="ingredientButtons"></div>
@@ -99,6 +206,17 @@
         </div>
         <div class="burger-area"><div class="burger" id="burger2"></div></div>
       </div>
+    </div>
+  </div>
+
+  <!-- 完成漢堡放大動畫 Overlay -->
+  <div id="finishOverlay" class="overlay">
+    <div class="overlay-backdrop"></div>
+    <div class="overlay-content">
+      <div class="overlay-title" id="overlayTitle">玩家 1 的漢堡完成！</div>
+      <div class="overlay-score">總分：<span id="overlayScore">0</span></div>
+      <div class="burger-large" id="overlayBurger"></div>
+      <button id="closeOverlayBtn" class="overlay-close-btn">關閉</button>
     </div>
   </div>
 
@@ -147,6 +265,14 @@ const p1ScoreEl = document.getElementById("p1Score");
 const p2ScoreEl = document.getElementById("p2Score");
 const currentPlayerPill = document.getElementById("currentPlayerPill");
 const switchBtn = document.getElementById("switchBtn");
+const finishBtn = document.getElementById("finishBtn");
+
+// Overlay 元件
+const finishOverlay = document.getElementById("finishOverlay");
+const overlayBurgerEl = document.getElementById("overlayBurger");
+const overlayTitleEl = document.getElementById("overlayTitle");
+const overlayScoreEl = document.getElementById("overlayScore");
+const closeOverlayBtn = document.getElementById("closeOverlayBtn");
 
 // ========================
 // Web Audio 產生「嗶」聲
@@ -155,7 +281,7 @@ let audioCtx = null;
 
 function playClickSound() {
   const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;                           // 太舊的瀏覽器就安靜玩
+  if (!AC) return;
 
   if (!audioCtx) {
     audioCtx = new AC();
@@ -168,7 +294,7 @@ function playClickSound() {
   const gain = audioCtx.createGain();
 
   osc.type = "square";
-  osc.frequency.value = 880;                 // 頻率高一點，比較有「按下去」的感覺
+  osc.frequency.value = 880;
 
   const now = audioCtx.currentTime;
   const duration = 0.08;
@@ -243,6 +369,42 @@ function renderStacks() {
 }
 
 // ========================
+// 完成畫面：放大漢堡
+// ========================
+function renderLargeBurger(stack) {
+  overlayBurgerEl.innerHTML = "";
+
+  const bottom = document.createElement("div");
+  bottom.className = "bun-large bottom";
+  bottom.textContent = "🍔";
+  overlayBurgerEl.appendChild(bottom);
+
+  stack.forEach(l => {
+    const layer = document.createElement("div");
+    layer.className = "layer-large";
+    layer.innerHTML = `${l.emoji} ${l.name} (+${l.score})`;
+    overlayBurgerEl.appendChild(layer);
+  });
+
+  const top = document.createElement("div");
+  top.className = "bun-large";
+  top.textContent = "🍔";
+  overlayBurgerEl.appendChild(top);
+}
+
+function showFinishOverlay() {
+  const stack = stacks[currentPlayer];
+  renderLargeBurger(stack);
+  overlayTitleEl.textContent = `玩家 ${currentPlayer} 的漢堡完成！`;
+  overlayScoreEl.textContent = scores[currentPlayer];
+  finishOverlay.classList.add("visible");
+}
+
+function hideFinishOverlay() {
+  finishOverlay.classList.remove("visible");
+}
+
+// ========================
 // 切換玩家 + 旋轉效果
 // ========================
 function switchPlayer() {
@@ -267,6 +429,11 @@ document.addEventListener("keydown", e => {
 });
 
 switchBtn.addEventListener("click", switchPlayer);
+finishBtn.addEventListener("click", showFinishOverlay);
+closeOverlayBtn.addEventListener("click", hideFinishOverlay);
+finishOverlay.addEventListener("click", (e) => {
+  if (e.target === finishOverlay) hideFinishOverlay();
+});
 
 // ========================
 // 清空按鈕
