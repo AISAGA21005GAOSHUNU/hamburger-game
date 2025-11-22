@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>漢堡對決 🍔（完成動畫＋音效＋分數）</title>
+  <title>汉堡对决 🍔（完成动画＋音效＋分数）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,7 +61,7 @@
 
     .layer { width:110px; border-radius:20px; padding:4px 8px; background:#fff; display:flex; justify-content:space-between; }
 
-    /* ===== 完成畫面 Overlay ===== */
+    /* ===== 完成画面 Overlay ===== */
     .overlay {
       position: fixed;
       inset: 0;
@@ -168,17 +168,17 @@
 </head>
 
 <body>
-  <h1>漢堡對決 🍔</h1>
-  <div class="subtitle">點食材堆漢堡，SPACE 切換玩家，完成鍵看放大版神作！</div>
+  <h1>汉堡对决 🍔</h1>
+  <div class="subtitle">点食材堆汉堡，按 SPACE 切换玩家，点完成看放大版神作！</div>
 
   <div class="game-wrapper">
     <div class="top-bar">
       <div class="current-player">
-        目前玩家：<div id="currentPlayerPill" class="player-pill">玩家 1</div>
+        当前玩家：<div id="currentPlayerPill" class="player-pill">玩家 1</div>
       </div>
       <div class="buttons-row">
-        <button id="switchBtn" class="ingredient-btn">切換玩家 (SPACE)</button>
-        <button id="finishBtn" class="ingredient-btn">完成漢堡 ✅</button>
+        <button id="switchBtn" class="ingredient-btn">切换玩家 (SPACE)</button>
+        <button id="finishBtn" class="ingredient-btn">完成汉堡 ✅</button>
       </div>
     </div>
 
@@ -189,8 +189,8 @@
       <div id="player1Panel" class="player-panel active">
         <div class="player-header">
           <div>🧑‍🍳 玩家 1</div>
-          <div class="stack-info">層數：<span id="p1Count">0</span></div>
-          <div class="score-info">分數：<span id="p1Score">0</span></div>
+          <div class="stack-info">层数：<span id="p1Count">0</span></div>
+          <div class="score-info">分数：<span id="p1Score">0</span></div>
           <button class="ingredient-btn" data-player="1">清空</button>
         </div>
         <div class="burger-area"><div class="burger" id="burger1"></div></div>
@@ -200,8 +200,8 @@
       <div id="player2Panel" class="player-panel">
         <div class="player-header">
           <div>👩‍🍳 玩家 2</div>
-          <div class="stack-info">層數：<span id="p2Count">0</span></div>
-          <div class="score-info">分數：<span id="p2Score">0</span></div>
+          <div class="stack-info">层数：<span id="p2Count">0</span></div>
+          <div class="score-info">分数：<span id="p2Score">0</span></div>
           <button class="ingredient-btn" data-player="2">清空</button>
         </div>
         <div class="burger-area"><div class="burger" id="burger2"></div></div>
@@ -209,44 +209,44 @@
     </div>
   </div>
 
-  <!-- 完成漢堡放大動畫 Overlay -->
+  <!-- 完成汉堡放大动画 Overlay -->
   <div id="finishOverlay" class="overlay">
     <div class="overlay-backdrop"></div>
     <div class="overlay-content">
-      <div class="overlay-title" id="overlayTitle">玩家 1 的漢堡完成！</div>
-      <div class="overlay-score">總分：<span id="overlayScore">0</span></div>
+      <div class="overlay-title" id="overlayTitle">玩家 1 的汉堡完成！</div>
+      <div class="overlay-score">总分：<span id="overlayScore">0</span></div>
       <div class="burger-large" id="overlayBurger"></div>
-      <button id="closeOverlayBtn" class="overlay-close-btn">關閉</button>
+      <button id="closeOverlayBtn" class="overlay-close-btn">关闭</button>
     </div>
   </div>
 
 <script>
 // ========================
-// 食材 + 分數
+// 食材 + 分数（名称改成简体）
 // ========================
 const ingredients = [
-  { id:"bun",  name:"漢堡", emoji:"🍔", score:60 },
+  { id:"bun",  name:"汉堡", emoji:"🍔", score:60 },
   { id:"beef", name:"牛肉", emoji:"🐮", score:45 },
-  { id:"pork", name:"豬肉", emoji:"🐷", score:35 },
-  { id:"chickenL", name:"雞腿排", emoji:"🍗", score:40 },
-  { id:"chickenB", name:"雞胸排", emoji:"🐔", score:30 },
-  { id:"fish", name:"魚排", emoji:"🐟", score:35 },
-  { id:"shrimp", name:"蝦排", emoji:"🦐", score:40 },
-  { id:"duck", name:"鴨肉", emoji:"🦆", score:45 },
+  { id:"pork", name:"猪肉", emoji:"🐷", score:35 },
+  { id:"chickenL", name:"鸡腿排", emoji:"🍗", score:40 },
+  { id:"chickenB", name:"鸡胸排", emoji:"🐔", score:30 },
+  { id:"fish", name:"鱼排", emoji:"🐟", score:35 },
+  { id:"shrimp", name:"虾排", emoji:"🦐", score:40 },
+  { id:"duck", name:"鸭肉", emoji:"🦆", score:45 },
   { id:"bacon", name:"培根", emoji:"🥓", score:20 },
   { id:"cheese", name:"起司", emoji:"🧀", score:20 },
   { id:"lettuce", name:"生菜", emoji:"🥬", score:5 },
-  { id:"tomato", name:"蕃茄", emoji:"🍅", score:5 },
-  { id:"onion", name:"洋蔥", emoji:"🧅", score:3 },
-  { id:"pickle", name:"小黃瓜", emoji:"🥒", score:5 },
+  { id:"tomato", name:"番茄", emoji:"🍅", score:5 },
+  { id:"onion", name:"洋葱", emoji:"🧅", score:3 },
+  { id:"pickle", name:"小黄瓜", emoji:"🥒", score:5 },
   { id:"corn", name:"玉米", emoji:"🌽", score:5 },
   { id:"mushroom", name:"香菇", emoji:"🍄", score:10 },
-  { id:"pineapple", name:"鳳梨", emoji:"🍍", score:8 },
+  { id:"pineapple", name:"凤梨", emoji:"🍍", score:8 },
   { id:"egg", name:"蛋", emoji:"🍳", score:12 },
   { id:"mayo", name:"美乃滋", emoji:"🤍", score:3 },
-  { id:"chili", name:"辣椒醬", emoji:"🌶️", score:3 },
-  { id:"bbq", name:"BBQ 醬", emoji:"🍖", score:6 },
-  { id:"peanut", name:"花生醬", emoji:"🥜", score:8 },
+  { id:"chili", name:"辣椒酱", emoji:"🌶️", score:3 },
+  { id:"bbq", name:"BBQ 酱", emoji:"🍖", score:6 },
+  { id:"peanut", name:"花生酱", emoji:"🥜", score:8 },
 ];
 
 let currentPlayer = 1;
@@ -275,7 +275,7 @@ const overlayScoreEl = document.getElementById("overlayScore");
 const closeOverlayBtn = document.getElementById("closeOverlayBtn");
 
 // ========================
-// Web Audio 產生「嗶」聲
+// Web Audio 产生「嗶」声
 // ========================
 let audioCtx = null;
 
@@ -310,7 +310,7 @@ function playClickSound() {
 }
 
 // ========================
-// 按鈕渲染
+// 按钮渲染
 // ========================
 function renderIngredientButtons() {
   ingredientButtonsContainer.innerHTML = "";
@@ -324,7 +324,7 @@ function renderIngredientButtons() {
 }
 
 // ========================
-// 加食材 + 播聲音
+// 加食材 + 播声音
 // ========================
 function addIngredient(item) {
   stacks[currentPlayer].push(item);
@@ -334,7 +334,7 @@ function addIngredient(item) {
 }
 
 // ========================
-// 渲染堆疊
+// 渲染堆叠
 // ========================
 function renderBurgerStack(container, stack) {
   container.innerHTML = "";
@@ -369,7 +369,7 @@ function renderStacks() {
 }
 
 // ========================
-// 完成畫面：放大漢堡
+// 完成画面：放大汉堡
 // ========================
 function renderLargeBurger(stack) {
   overlayBurgerEl.innerHTML = "";
@@ -395,7 +395,7 @@ function renderLargeBurger(stack) {
 function showFinishOverlay() {
   const stack = stacks[currentPlayer];
   renderLargeBurger(stack);
-  overlayTitleEl.textContent = `玩家 ${currentPlayer} 的漢堡完成！`;
+  overlayTitleEl.textContent = `玩家 ${currentPlayer} 的汉堡完成！`;
   overlayScoreEl.textContent = scores[currentPlayer];
   finishOverlay.classList.add("visible");
 }
@@ -405,7 +405,7 @@ function hideFinishOverlay() {
 }
 
 // ========================
-// 切換玩家 + 旋轉效果
+// 切换玩家 + 旋转效果
 // ========================
 function switchPlayer() {
   currentPlayer = currentPlayer === 1 ? 2 : 1;
@@ -436,7 +436,7 @@ finishOverlay.addEventListener("click", (e) => {
 });
 
 // ========================
-// 清空按鈕
+// 清空按钮
 // ========================
 document.querySelectorAll("[data-player]").forEach(btn => {
   btn.addEventListener("click", () => {
