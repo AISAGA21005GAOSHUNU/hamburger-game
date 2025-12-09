@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>汉堡对决 🍔（完成动画＋音效＋分数）</title>
+  <title>汉堡对决 🍔（三人版）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,442 +16,188 @@
       padding: 16px;
       color: #222;
     }
-    h1 { font-size: 2rem; margin-bottom: 4px; }
-    .subtitle { font-size: 0.9rem; opacity: 0.8; margin-bottom: 16px; }
+    h1 { font-size: 2rem; margin-bottom: 6px; }
 
-    .game-wrapper { max-width: 1100px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+    .game-wrapper { max-width: 1200px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+
     .top-bar {
-      display: flex; justify-content: space-between; align-items: center; gap: 8px;
-      flex-wrap: wrap; background: rgba(255,255,255,0.8);
-      padding: 10px 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px 14px; border-radius: 12px;
     }
-    .current-player { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-    .player-pill { padding: 4px 10px; border-radius: 999px; border: 1px solid #222; background: #ffe066; min-width: 80px; text-align: center; }
 
     .buttons-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .ingredient-btn {
-      padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.9);
-      border: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: inline-flex;
-      align-items: center; gap: 4px; cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      transition: 0.1s;
+      padding: 6px 10px; border-radius: 999px;
+      background: #fff; border: 1px solid #ddd;
+      cursor: pointer;
     }
-    .ingredient-btn:active { transform: scale(0.95); }
 
-    .main-area { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
-    @media(max-width:768px){ .main-area{ grid-template-columns:1fr; } }
+    .main-area {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 16px;
+    }
 
     .player-panel {
-      background: rgba(255,255,255,0.9); border-radius:16px; padding:12px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; flex-direction:column; gap:8px; position:relative;
+      background: #fff; border-radius: 16px; padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .player-panel.active { box-shadow:0 0 0 2px #ff922b, 0 6px 14px rgba(0,0,0,0.18); }
 
-    .player-header { display:flex; justify-content:space-between; align-items:center; gap: 8px; flex-wrap: wrap; }
-    .stack-info { font-size:0.8rem; opacity:0.8; }
-    .score-info { font-size:0.9rem; font-weight:700; color:#b34300; }
+    .burger { display:flex; flex-direction:column; align-items:center; }
 
-    .burger-area { display:flex; align-items:flex-end; justify-content:center; padding:8px; perspective:800px; }
-    .burger { display:flex; flex-direction:column; align-items:center; gap:3px; transform-origin:center bottom; transition:0.4s; }
-    .burger.rotate { transform: rotateY(360deg); }
+    .bun { width:100px; height:24px; background:#f4a259; border-radius:20px; }
+    .bun.bottom { height:20px; background:#d07e35; }
 
-    .bun { width:120px; height:28px; border-radius:50% 50% 40% 40%; background:linear-gradient(180deg,#ffdf91,#f4a259); display:flex; align-items:center; justify-content:center; }
-    .bun.bottom { border-radius:40% 40% 50% 50%; height:24px; background:linear-gradient(180deg,#f4a259,#d07e35); }
+    .layer { width:90px; background:#fff; margin:2px 0; border-radius:12px; text-align:center; }
 
-    .layer { width:110px; border-radius:20px; padding:4px 8px; background:#fff; display:flex; justify-content:space-between; }
-
-    /* ===== 完成画面 Overlay ===== */
     .overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 20;
+      position: fixed; inset: 0;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.5);
+      visibility: hidden;
     }
-    .overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .overlay-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-    }
+
+    .overlay.visible { visibility: visible; }
+
     .overlay-content {
-      position: relative;
-      background: #fffaf0;
-      border-radius: 24px;
-      padding: 20px 24px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-      max-width: 360px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      animation: pop-in 0.35s ease-out;
+      background: white; padding: 20px;
+      border-radius: 20px; text-align: center;
     }
-    @keyframes pop-in {
-      from { transform: scale(0.7) translateY(20px); opacity: 0; }
-      to   { transform: scale(1) translateY(0); opacity: 1; }
-    }
-
-    .overlay-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      text-align: center;
-    }
-    .overlay-score {
-      font-size: 0.95rem;
-      opacity: 0.8;
-      margin-bottom: 4px;
-    }
-
-    .burger-large {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:5px;
-      transform-origin:center bottom;
-      animation: float-burger 2s ease-in-out infinite alternate;
-    }
-    @keyframes float-burger {
-      from { transform: translateY(0) scale(1); }
-      to   { transform: translateY(-8px) scale(1.03); }
-    }
-
-    .bun-large {
-      width: 200px;
-      height: 50px;
-      border-radius: 50% 50% 40% 40%;
-      background: linear-gradient(180deg,#ffdf91,#f4a259);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:2.1rem;
-      box-shadow:0 4px 10px rgba(0,0,0,0.3);
-    }
-    .bun-large.bottom {
-      border-radius:40% 40% 50% 50%;
-      height:40px;
-      background:linear-gradient(180deg,#f4a259,#d07e35);
-      box-shadow:0 0 0 rgba(0,0,0,0.2);
-    }
-    .layer-large {
-      width:180px;
-      border-radius:24px;
-      padding:6px 12px;
-      background:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      font-size:1rem;
-      box-shadow:0 3px 8px rgba(0,0,0,0.18);
-    }
-
-    .overlay-close-btn {
-      margin-top: 4px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: none;
-      background: #ffcc80;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .overlay-close-btn:hover { background:#ffb74d; }
   </style>
 </head>
 
 <body>
-  <h1>汉堡对决 🍔</h1>
-  <div class="subtitle">点食材堆汉堡，按 SPACE 切换玩家，点完成看放大版神作！</div>
+<h1>汉堡对决 🍔（三人乱斗版）</h1>
 
-  <div class="game-wrapper">
-    <div class="top-bar">
-      <div class="current-player">
-        当前玩家：<div id="currentPlayerPill" class="player-pill">玩家 1</div>
-      </div>
-      <div class="buttons-row">
-        <button id="switchBtn" class="ingredient-btn">切换玩家 (SPACE)</button>
-        <button id="finishBtn" class="ingredient-btn">完成汉堡 ✅</button>
-      </div>
-    </div>
+<div class="game-wrapper">
 
-    <div class="buttons-row" id="ingredientButtons"></div>
-
-    <div class="main-area">
-      <!-- 玩家1 -->
-      <div id="player1Panel" class="player-panel active">
-        <div class="player-header">
-          <div>🧑‍🍳 玩家 1</div>
-          <div class="stack-info">层数：<span id="p1Count">0</span></div>
-          <div class="score-info">分数：<span id="p1Score">0</span></div>
-          <button class="ingredient-btn" data-player="1">清空</button>
-        </div>
-        <div class="burger-area"><div class="burger" id="burger1"></div></div>
-      </div>
-
-      <!-- 玩家2 -->
-      <div id="player2Panel" class="player-panel">
-        <div class="player-header">
-          <div>👩‍🍳 玩家 2</div>
-          <div class="stack-info">层数：<span id="p2Count">0</span></div>
-          <div class="score-info">分数：<span id="p2Score">0</span></div>
-          <button class="ingredient-btn" data-player="2">清空</button>
-        </div>
-        <div class="burger-area"><div class="burger" id="burger2"></div></div>
-      </div>
+  <div class="top-bar">
+    当前玩家：<b id="currentPlayerPill">玩家 1</b>
+    <div class="buttons-row">
+      <button id="switchBtn" class="ingredient-btn">切换玩家</button>
+      <button id="finishBtn" class="ingredient-btn">完成汉堡</button>
     </div>
   </div>
 
-  <!-- 完成汉堡放大动画 Overlay -->
-  <div id="finishOverlay" class="overlay">
-    <div class="overlay-backdrop"></div>
-    <div class="overlay-content">
-      <div class="overlay-title" id="overlayTitle">玩家 1 的汉堡完成！</div>
-      <div class="overlay-score">总分：<span id="overlayScore">0</span></div>
-      <div class="burger-large" id="overlayBurger"></div>
-      <button id="closeOverlayBtn" class="overlay-close-btn">关闭</button>
+  <div class="buttons-row" id="ingredientButtons"></div>
+
+  <div class="main-area">
+    <div class="player-panel">
+      🧑‍🍳 玩家1 | 层：<span id="p1Count">0</span> | 分：<span id="p1Score">0</span>
+      <div class="burger" id="burger1"></div>
+    </div>
+
+    <div class="player-panel">
+      👩‍🍳 玩家2 | 层：<span id="p2Count">0</span> | 分：<span id="p2Score">0</span>
+      <div class="burger" id="burger2"></div>
+    </div>
+
+    <div class="player-panel">
+      🧑‍🚀 玩家3 | 层：<span id="p3Count">0</span> | 分：<span id="p3Score">0</span>
+      <div class="burger" id="burger3"></div>
     </div>
   </div>
+</div>
+
+<!-- 完成动画 -->
+<div id="finishOverlay" class="overlay">
+  <div class="overlay-content">
+    <h3 id="overlayTitle"></h3>
+    <p>总分：<span id="overlayScore"></span></p>
+    <div id="overlayBurger"></div>
+    <button id="closeOverlayBtn">关闭</button>
+  </div>
+</div>
 
 <script>
-// ========================
-// 食材 + 分数（名称改成简体）
-// ========================
 const ingredients = [
-  { id:"bun",  name:"汉堡", emoji:"🍔", score:60 },
-  { id:"beef", name:"牛肉", emoji:"🐮", score:45 },
-  { id:"pork", name:"猪肉", emoji:"🐷", score:35 },
-  { id:"chickenL", name:"鸡腿排", emoji:"🍗", score:40 },
-  { id:"chickenB", name:"鸡胸排", emoji:"🐔", score:30 },
-  { id:"fish", name:"鱼排", emoji:"🐟", score:35 },
-  { id:"shrimp", name:"虾排", emoji:"🦐", score:40 },
-  { id:"duck", name:"鸭肉", emoji:"🦆", score:45 },
-  { id:"bacon", name:"培根", emoji:"🥓", score:20 },
-  { id:"cheese", name:"起司", emoji:"🧀", score:20 },
-  { id:"lettuce", name:"生菜", emoji:"🥬", score:5 },
-  { id:"tomato", name:"番茄", emoji:"🍅", score:5 },
-  { id:"onion", name:"洋葱", emoji:"🧅", score:3 },
-  { id:"pickle", name:"小黄瓜", emoji:"🥒", score:5 },
-  { id:"corn", name:"玉米", emoji:"🌽", score:5 },
-  { id:"mushroom", name:"香菇", emoji:"🍄", score:10 },
-  { id:"pineapple", name:"凤梨", emoji:"🍍", score:8 },
-  { id:"egg", name:"蛋", emoji:"🍳", score:12 },
-  { id:"mayo", name:"美乃滋", emoji:"🤍", score:3 },
-  { id:"chili", name:"辣椒酱", emoji:"🌶️", score:3 },
-  { id:"bbq", name:"BBQ 酱", emoji:"🍖", score:6 },
-  { id:"peanut", name:"花生酱", emoji:"🥜", score:8 },
+  { name:"汉堡", emoji:"🍔", score:60 },
+  { name:"牛肉", emoji:"🐮", score:45 },
+  { name:"猪肉", emoji:"🐷", score:35 },
+  { name:"鸡腿排", emoji:"🍗", score:40 },
+  { name:"鱼排", emoji:"🐟", score:35 },
+  { name:"起司", emoji:"🧀", score:20 },
+  { name:"生菜", emoji:"🥬", score:5 },
+  { name:"番茄", emoji:"🍅", score:5 },
+  { name:"蛋", emoji:"🍳", score:12 },
+  { name:"BBQ酱", emoji:"🍖", score:6 },
 ];
 
 let currentPlayer = 1;
-const stacks = { 1: [], 2: [] };
-const scores = { 1: 0, 2: 0 };
+const stacks = {1:[],2:[],3:[]};
+const scores = {1:0,2:0,3:0};
 
-// ========================
-// DOM
-// ========================
-const ingredientButtonsContainer = document.getElementById("ingredientButtons");
-const burger1El = document.getElementById("burger1");
-const burger2El = document.getElementById("burger2");
-const p1CountEl = document.getElementById("p1Count");
-const p2CountEl = document.getElementById("p2Count");
-const p1ScoreEl = document.getElementById("p1Score");
-const p2ScoreEl = document.getElementById("p2Score");
-const currentPlayerPill = document.getElementById("currentPlayerPill");
-const switchBtn = document.getElementById("switchBtn");
-const finishBtn = document.getElementById("finishBtn");
+const ingredientButtons = document.getElementById("ingredientButtons");
+const pill = document.getElementById("currentPlayerPill");
 
-// Overlay 元件
-const finishOverlay = document.getElementById("finishOverlay");
-const overlayBurgerEl = document.getElementById("overlayBurger");
-const overlayTitleEl = document.getElementById("overlayTitle");
-const overlayScoreEl = document.getElementById("overlayScore");
-const closeOverlayBtn = document.getElementById("closeOverlayBtn");
-
-// ========================
-// Web Audio 产生「嗶」声
-// ========================
-let audioCtx = null;
-
-function playClickSound() {
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-
-  if (!audioCtx) {
-    audioCtx = new AC();
-  }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  osc.type = "square";
-  osc.frequency.value = 880;
-
-  const now = audioCtx.currentTime;
-  const duration = 0.08;
-
-  gain.gain.setValueAtTime(0.2, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start(now);
-  osc.stop(now + duration);
-}
-
-// ========================
-// 按钮渲染
-// ========================
-function renderIngredientButtons() {
-  ingredientButtonsContainer.innerHTML = "";
-  ingredients.forEach(item => {
-    const btn = document.createElement("button");
-    btn.className = "ingredient-btn";
-    btn.innerHTML = `${item.emoji} ${item.name} +${item.score}`;
-    btn.addEventListener("click", () => addIngredient(item));
-    ingredientButtonsContainer.appendChild(btn);
+function renderButtons(){
+  ingredients.forEach(i=>{
+    const b=document.createElement("button");
+    b.className="ingredient-btn";
+    b.innerText=`${i.emoji}${i.name}+${i.score}`;
+    b.onclick=()=>addIngredient(i);
+    ingredientButtons.appendChild(b);
   });
 }
 
-// ========================
-// 加食材 + 播声音
-// ========================
-function addIngredient(item) {
+function addIngredient(item){
   stacks[currentPlayer].push(item);
-  scores[currentPlayer] += item.score;
-  renderStacks();
-  playClickSound();
+  scores[currentPlayer]+=item.score;
+  render();
+  beep();
 }
 
-// ========================
-// 渲染堆叠
-// ========================
-function renderBurgerStack(container, stack) {
-  container.innerHTML = "";
-
-  const bottom = document.createElement("div");
-  bottom.className = "bun bottom";
-  bottom.textContent = "🍔";
-  container.appendChild(bottom);
-
-  stack.forEach(l => {
-    const layer = document.createElement("div");
-    layer.className = "layer";
-    layer.innerHTML = `${l.emoji} ${l.name} (+${l.score})`;
-    container.appendChild(layer);
-  });
-
-  const top = document.createElement("div");
-  top.className = "bun";
-  top.textContent = "🍔";
-  container.appendChild(top);
-}
-
-function renderStacks() {
-  renderBurgerStack(burger1El, stacks[1]);
-  renderBurgerStack(burger2El, stacks[2]);
-
-  p1CountEl.textContent = stacks[1].length;
-  p2CountEl.textContent = stacks[2].length;
-
-  p1ScoreEl.textContent = scores[1];
-  p2ScoreEl.textContent = scores[2];
-}
-
-// ========================
-// 完成画面：放大汉堡
-// ========================
-function renderLargeBurger(stack) {
-  overlayBurgerEl.innerHTML = "";
-
-  const bottom = document.createElement("div");
-  bottom.className = "bun-large bottom";
-  bottom.textContent = "🍔";
-  overlayBurgerEl.appendChild(bottom);
-
-  stack.forEach(l => {
-    const layer = document.createElement("div");
-    layer.className = "layer-large";
-    layer.innerHTML = `${l.emoji} ${l.name} (+${l.score})`;
-    overlayBurgerEl.appendChild(layer);
-  });
-
-  const top = document.createElement("div");
-  top.className = "bun-large";
-  top.textContent = "🍔";
-  overlayBurgerEl.appendChild(top);
-}
-
-function showFinishOverlay() {
-  const stack = stacks[currentPlayer];
-  renderLargeBurger(stack);
-  overlayTitleEl.textContent = `玩家 ${currentPlayer} 的汉堡完成！`;
-  overlayScoreEl.textContent = scores[currentPlayer];
-  finishOverlay.classList.add("visible");
-}
-
-function hideFinishOverlay() {
-  finishOverlay.classList.remove("visible");
-}
-
-// ========================
-// 切换玩家 + 旋转效果
-// ========================
-function switchPlayer() {
-  currentPlayer = currentPlayer === 1 ? 2 : 1;
-  currentPlayerPill.textContent = `玩家 ${currentPlayer}`;
-  rotateBurgers();
-}
-
-function rotateBurgers() {
-  [burger1El, burger2El].forEach(el => {
-    el.classList.remove("rotate");
-    void el.offsetWidth;
-    el.classList.add("rotate");
+function render(){
+  [1,2,3].forEach(p=>{
+    const burger=document.getElementById("burger"+p);
+    burger.innerHTML="";
+    stacks[p].forEach(l=>{
+      const d=document.createElement("div");
+      d.className="layer";
+      d.innerText=l.emoji;
+      burger.appendChild(d);
+    });
+    document.getElementById("p"+p+"Count").innerText=stacks[p].length;
+    document.getElementById("p"+p+"Score").innerText=scores[p];
   });
 }
 
-document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    e.preventDefault();
-    switchPlayer();
-  }
-});
+function switchPlayer(){
+  currentPlayer = currentPlayer === 3 ? 1 : currentPlayer+1;
+  pill.innerText="玩家 "+currentPlayer;
+}
 
-switchBtn.addEventListener("click", switchPlayer);
-finishBtn.addEventListener("click", showFinishOverlay);
-closeOverlayBtn.addEventListener("click", hideFinishOverlay);
-finishOverlay.addEventListener("click", (e) => {
-  if (e.target === finishOverlay) hideFinishOverlay();
-});
+document.getElementById("switchBtn").onclick=switchPlayer;
 
-// ========================
-// 清空按钮
-// ========================
-document.querySelectorAll("[data-player]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const p = Number(btn.getAttribute("data-player"));
-    stacks[p] = [];
-    scores[p] = 0;
-    renderStacks();
+document.getElementById("finishBtn").onclick=()=>{
+  document.getElementById("overlayTitle").innerText="玩家 "+currentPlayer+" 的汉堡完成！";
+  document.getElementById("overlayScore").innerText=scores[currentPlayer];
+  const ob=document.getElementById("overlayBurger");
+  ob.innerHTML="";
+  stacks[currentPlayer].forEach(l=>{
+    const d=document.createElement("div");
+    d.innerText=l.emoji;
+    ob.appendChild(d);
   });
-});
+  document.getElementById("finishOverlay").classList.add("visible");
+};
 
-// ========================
-// 初始化
-// ========================
-renderIngredientButtons();
-renderStacks();
+document.getElementById("closeOverlayBtn").onclick=()=>{
+  document.getElementById("finishOverlay").classList.remove("visible");
+};
+
+// 简单嗶声
+function beep(){
+  const ctx=new AudioContext();
+  const osc=ctx.createOscillator();
+  osc.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime+0.1);
+}
+
+renderButtons();
 </script>
 </body>
 </html>
