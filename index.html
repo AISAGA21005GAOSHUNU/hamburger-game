@@ -139,7 +139,7 @@
 <body>
 
 <h1>汉堡对决 🍔（三人乱斗版）</h1>
-<div class="subtitle">点选食材会自动加分，也会在下面的汉堡里显示「图＋文字」，有上下面包夹住！</div>
+<div class="subtitle">点选食材会自动加分，也会在下面的汉堡里显示「图＋文字」，有上下汉堡皮夹住！</div>
 
 <div class="game-wrapper">
 
@@ -250,7 +250,7 @@ function addIngredient(item){
   showBurgerEffect(item);
 }
 
-/* ========== 更新 UI：含上麵包＋下麵包＋文字 ========== */
+/* ========== 更新 UI：含上下汉堡皮＋文字 ========== */
 function updateUI(){
   [1,2,3].forEach(p=>{
     document.getElementById(`p${p}Count`).innerText=stacks[p].length;
@@ -259,13 +259,13 @@ function updateUI(){
     const box=document.getElementById(`burger${p}`);
     box.innerHTML="";
 
-    // 上麵包
+    // 上汉堡皮：只顯示圖示
     const topBun=document.createElement("div");
     topBun.className="bun-top";
-    topBun.textContent="🍔 上面包";
+    topBun.textContent="🍔";
     box.appendChild(topBun);
 
-    // 中间每一层：emoji + 文字
+    // 中间食材：emoji + 文字
     stacks[p].forEach(layer=>{
       const div=document.createElement("div");
       div.className="layer";
@@ -273,10 +273,10 @@ function updateUI(){
       box.appendChild(div);
     });
 
-    // 下麵包
+    // 下汉堡皮：只顯示圖示
     const bottomBun=document.createElement("div");
     bottomBun.className="bun-bottom";
-    bottomBun.textContent="🍔 下面包";
+    bottomBun.textContent="🍔";
     box.appendChild(bottomBun);
   });
 }
@@ -299,12 +299,14 @@ document.querySelectorAll("[data-player]").forEach(btn=>{
 
 /* ========== 嗶聲 ========== */
 function playBeep(){
-  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return;
+  const ctx=new Ctor();
   const osc=ctx.createOscillator();
   osc.type="square";
   osc.connect(ctx.destination);
   osc.start();
-  osc.stop(ctx.currentTime+0.1);
+  osc.stop(ctx.currentTime+0.08);
 }
 
 /* ========== 大汉堡夹字动画 ========== */
